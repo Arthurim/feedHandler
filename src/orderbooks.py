@@ -9,8 +9,9 @@ from uuid import uuid4
 
 import pandas as pd
 
-from kdb_utils_format import has_kdb_format_timestamp
-from persistence import persist_row_to_table
+from .constants.kdb_hosts import MARKET_DATA_KDB_HOST, MARKET_DATA_TP
+from .utils.kdb_utils_format import has_kdb_format_timestamp
+from .utils.persistence_utils import persist_row_to_table
 
 
 def dicttofloat(keyvalue):
@@ -165,4 +166,4 @@ def insert_orderbook_new_row_to_kdb(api_book):
     """
     new_row = get_orderbook(api_book)
     kdb_row = convert_orderbook_series_to_kdb_row(new_row)
-    persist_row_to_table(kdb_row, "orderbooks", "localhost", 5000)
+    persist_row_to_table(kdb_row, "orderbooks", MARKET_DATA_KDB_HOST, MARKET_DATA_TP)

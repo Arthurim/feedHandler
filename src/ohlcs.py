@@ -8,8 +8,9 @@ import logging
 
 import pandas as pd
 
-from persistence import persist_row_to_table
-from pythonToKdbConversion import convert_ohlc_series_to_kdb_row
+from .constants.kdb_hosts import MARKET_DATA_KDB_HOST, MARKET_DATA_TP
+from .utils.persistence_utils import persist_row_to_table
+from .utils.python_to_kdb_conversion import convert_ohlc_series_to_kdb_row
 
 
 def persist_ohlc_to_kdb(result):
@@ -32,4 +33,4 @@ def persist_ohlc_to_kdb(result):
                          "tradeCount":int(ohlc[8])
                         })
     kdb_row = convert_ohlc_series_to_kdb_row(new_row)
-    persist_row_to_table(kdb_row, "ohlcs", "localhost", 5000)
+    persist_row_to_table(kdb_row, "ohlcs", MARKET_DATA_KDB_HOST, MARKET_DATA_TP)

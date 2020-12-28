@@ -8,11 +8,17 @@ import logging
 
 import pandas as pd
 
-from persistence import persist_row_to_table
-from pythonToKdbConversion import convert_trades_series_to_kdb_row
+from .constants.kdb_hosts import MARKET_DATA_KDB_HOST, MARKET_DATA_TP
+from .utils.persistence_utils import persist_row_to_table
+from .utils.python_to_kdb_conversion import convert_trades_series_to_kdb_row
 
 
 def persist_trades_to_kdb(result):
+    """
+    Persists the result of the Webscoket API to Kdb
+    :param result: a dictionary containg the result from API call
+    :return:
+    """
     app_log = logging.getLogger('root')
     app_log.info("Persisting #" + str(len(result[1])) + " trades to kdb")
     for trade in result[1]:
@@ -31,4 +37,4 @@ def persist_trades_to_kdb(result):
                              "misc": str('""' if trade[5] == '' else trade[5])
                              })
         kdb_row = convert_trades_series_to_kdb_row(new_row)
-        persist_row_to_table(kdb_row, "trades", "localhost", 5000)
+        persist_row_to_table(kdb_row, "trades", MARKET_DATA_KDB_HOST, MARKET_DATA_TP)

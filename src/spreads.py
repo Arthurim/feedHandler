@@ -8,8 +8,9 @@ import logging
 
 import pandas as pd
 
-from persistence import persist_row_to_table
-from pythonToKdbConversion import convert_spread_to_kdb_row
+from .constants.kdb_hosts import MARKET_DATA_KDB_HOST, MARKET_DATA_TP
+from .utils.persistence_utils import persist_row_to_table
+from .utils.python_to_kdb_conversion import convert_spread_to_kdb_row
 
 
 def persist_spread_to_kdb(result):
@@ -28,4 +29,4 @@ def persist_spread_to_kdb(result):
                          "offerSize": float(spread[4])
                          })
     kdb_row = convert_spread_to_kdb_row(new_row)
-    persist_row_to_table(kdb_row, "spreads", "localhost", 5000)
+    persist_row_to_table(kdb_row, "spreads", MARKET_DATA_KDB_HOST, MARKET_DATA_TP)

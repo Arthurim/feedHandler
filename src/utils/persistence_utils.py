@@ -3,17 +3,10 @@
 @author: Arthurim
 @Description:
 """
-import datetime
 
 from qpython import qconnection
 
-from ohlcs import persist_ohlc_to_kdb
-from orderbooks import persist_orderbook_to_kdb
-from pythonToKdbConversion import convert_spread_to_kdb_row, convert_trades_series_to_kdb_row
-import pandas as pd
-
-from spreads import persist_spread_to_kdb
-from trades import persist_trades_to_kdb
+from .python_to_kdb_conversion import convert_trades_series_to_kdb_row
 
 
 def get_market_from_row(row):
@@ -63,20 +56,6 @@ def insert_trades_new_row_to_kdb(new_row):
             app_log.error("Persisting Trades for " + new_row["sym"] + " on " + new_row[
                 "market"] + ' - Caught this error: ' + repr(error))
     return kdb_row
-
-
-def persist_subscription_result_to_kdb(result, subscription_type, arg=""):
-    if subscription_type == "orderbooks":
-        arg = persist_orderbook_to_kdb(arg, result)
-    elif subscription_type == "trades":
-        persist_trades_to_kdb(result)
-    elif subscription_type == "ohlcs":
-        persist_ohlc_to_kdb(result)
-    elif subscription_type == "spreads":
-        persist_spread_to_kdb(result)
-    else:
-        raise ValueError("This subscription_type is not yet supported: " + str(subscription_type))
-    return arg
 
 
 def get_args_for_subscription(subscription_type, sym, market):
