@@ -7,7 +7,9 @@
 
 import sys
 
-from src.utils.websocket_message_handler import create_ws_subscription_kdb_persister_debug
+from src.persistence import create_ws_subscription_kdb_persister_debug
 
-create_ws_subscription_kdb_persister_debug(subscription_type=sys.argv[1], sym=sys.argv[2], market=sys.argv[3],
+create_ws_subscription_kdb_persister_debug(subscription_type=sys.argv[1],
+                                           sym=sys.argv[2],
+                                           market=sys.argv[3],
                                            debug_time=int(sys.argv[4]))
