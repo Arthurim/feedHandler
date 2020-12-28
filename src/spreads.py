@@ -3,8 +3,10 @@
 @author: Arthurim
 @Description:
 """
-import pandas as pd
 import datetime
+import logging
+
+import pandas as pd
 
 from persistence import persist_row_to_table
 from pythonToKdbConversion import convert_spread_to_kdb_row
@@ -12,6 +14,7 @@ from pythonToKdbConversion import convert_spread_to_kdb_row
 
 def persist_spread_to_kdb(result):
     spread = result[1]
+    app_log = logging.getLogger('root')
     app_log.info("Persisting spread to kdb")
     new_row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
                          "sym": result[3],

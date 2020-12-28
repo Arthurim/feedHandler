@@ -3,10 +3,11 @@
 @author: Arthurim
 @Description:
 """
+import datetime
+import logging
 from uuid import uuid4
 
 import pandas as pd
-import datetime
 
 from kdb_utils_format import has_kdb_format_timestamp
 from persistence import persist_row_to_table
@@ -63,6 +64,7 @@ def persist_orderbook_to_kdb(api_book, result, depth=10):
     """
     # TODO checksum see https://docs.kraken.com/websockets/#book-checksum
     result = get_data_from_orderbook_result(result, api_book["market"])
+    app_log = logging.getLogger('root')
     if "asks" in result:
         api_book = update_order_book_with_side_data(api_book, "ask", result["asks"], depth)
         api_book = update_order_book_with_side_data(api_book, "bid", result["bids"], depth)

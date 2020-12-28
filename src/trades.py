@@ -3,14 +3,17 @@
 @author: Arthurim
 @Description:
 """
-import pandas as pd
 import datetime
+import logging
+
+import pandas as pd
 
 from persistence import persist_row_to_table
 from pythonToKdbConversion import convert_trades_series_to_kdb_row
 
 
 def persist_trades_to_kdb(result):
+    app_log = logging.getLogger('root')
     app_log.info("Persisting #" + str(len(result[1])) + " trades to kdb")
     for trade in result[1]:
         new_row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
