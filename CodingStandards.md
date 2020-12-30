@@ -1,11 +1,20 @@
 # Coding Standards
 
-## TLDR
+## Contributing to the project
+Please create a branch off `master` and name it:
+ - `feature/Adding_this_feature` if it is to add a new feature
+ - `fix/Fixing_this_function` if it is to fix an existing feature
+ then create a PR and add me as a reviewer.
+ As a rule of thumb always test your code before raising a PR.
+ 
+## Naming conventions
+
+### TLDR
 Use very informative and explicit names for everything, however long they are, as long as one knows what it is.
 And do not hesitate to comment what your code does. It might be obvious to you but not to the other contributors.
 Better over-commenting than under-commenting.
 
-## File
+### File
 Naming: `very_explicit_file_name_with_underscores`
 ```
 """
@@ -14,7 +23,7 @@ Naming: `very_explicit_file_name_with_underscores`
 """
 ```
 
-## Functions
+### Functions
 Naming: `very_explicit_function_name_with_underscores` even if long
 Functions are required to have the below comments at the beginning if they are more than 4 rows long:
 ```
@@ -27,8 +36,8 @@ def very_explicit_function_name_with_underscores(veryExplicitVariableName1, very
     """
 ```
 
-## Variables
+### Variables
 Naming: `veryExcplicitVariableName` even if long
 
-## Comments
+### Comments
 Put comments inside your functions to explain what you are doing.
