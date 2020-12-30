@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 @author: Arthurim
-@Description:
+@Description: Various functions to handle creation of webscoket connections, logging, interpretation of WS results
 """
 import datetime
 import json
@@ -11,7 +11,15 @@ from logging.handlers import RotatingFileHandler
 from websocket import create_connection
 
 
-def create_wss_connection_url_for_market(subscription_type, market, sym):
+def create_wss_connection(subscription_type, market, sym):
+    """
+    Creates the websocket connection for a given market,sym, subscription type
+
+    :param subscription_type: str
+    :param market: str
+    :param sym: str
+    :return: websocket
+    """
     if market == "KRAKEN":
         ws = create_connection("wss://ws.kraken.com")
         if subscription_type == "orderbooks":
@@ -51,8 +59,16 @@ def create_wss_connection_url_for_market(subscription_type, market, sym):
 
 
 def create_ws_subscription_logger(subscription_type, sym, market):
+    """
+    Creates a logger to the log folder
+    :param subscription_type: str
+    :param sym: str
+    :param market: str
+    :return: logger
+    """
     log_formatter = logging.Formatter('%(asctime)s %(levelname)s %(funcName)s(%(lineno)d) %(message)s')
-    logFile = 'C:/dev/log/marketdata/log_' + subscription_type + '_' + market + "_" + datetime.datetime.now().strftime(
+    # TODO: exctract path as a global variable ?
+    logFile = 'C:/dev/log/marketdata/log_' + subscription_type + '_' + market + "_" + sym + "_" + datetime.datetime.now().strftime(
         "%Y-%m-%d-%H-%M-%S-%f")
     my_handler = RotatingFileHandler(logFile, mode='a', maxBytes=5 * 1024 * 1024,
                                      backupCount=2, encoding=None, delay=0)

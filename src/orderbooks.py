@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 @author: Arthurim
-@Description:
+@Description: functions to handle the creation of an orderbook from the ECNs APIs and to persist it to kdb
 """
 import datetime
 import logging
@@ -22,6 +22,9 @@ def process_side(levels):
     """
     From a dictionary where each key is volume and value is price,
     returns a list of prices and a list of sizes
+
+    :param levels: dictionary or list, the levels of depth in orderbook with volume & price (& timestamp)
+    :return: two lists of float, prices and sizes for each level of the orderbook
     """
     prices = []
     sizes = []
@@ -43,6 +46,12 @@ def process_side(levels):
 def update_order_book_with_side_data(api_book, side, data, depth=10):
     """
     Updates the api_book on a given side with the new data for a max depth level
+
+    :param api_book: dictionary, last representation of the orderbook
+    :param side: string, "bid" or "ask"
+    :param data:
+    :param depth: int, max level of depth we want to persist data for
+    :return: dictionary, new representation of the orderbook
     """
     for x in data:
         price_level = x[0]
@@ -61,8 +70,14 @@ def update_order_book_with_side_data(api_book, side, data, depth=10):
 
 def persist_orderbook_to_kdb(api_book, result, depth=10):
     """
-    Updates the orderbook api_book with the new result for a max depth level
+    Updates the orderbook api_book with the new result for a max depth level and calls the persistence function
+
+    :param api_book: dictionary, last state of the orderbook
+    :param result: dictionary, the result from the API
+    :param depth: int, the max nb of levels we want to persist
+    :return:
     """
+
     # TODO checksum see https://docs.kraken.com/websockets/#book-checksum
     result = get_data_from_orderbook_result(result, api_book["market"])
     app_log = logging.getLogger('root')
@@ -87,6 +102,12 @@ def persist_orderbook_to_kdb(api_book, result, depth=10):
 
 
 def convert_orderbook_series_to_kdb_row(new_row):
+    """
+    Converts a pd.series row representing the orderbook to a string to insert into kdb
+
+    :param new_row: pd.series, a row representing the orderbook, obtained from get_orderbook
+    :return: str, the string representation of the orderbook, to insert as a new row in kdb
+    """
     return ".z.N;" + \
            "`" + new_row["sym"].replace("/", "") + ";" + \
            ".z.p;" + \
@@ -101,7 +122,11 @@ def convert_orderbook_series_to_kdb_row(new_row):
 
 def get_data_from_orderbook_result(result, market):
     """
-    returns a dictionary of orderbook data depending on the result obtained from WS api as it differs for each market
+    Returns a dictionary of orderbook data depending on the result obtained from WS api as it differs for each market
+
+    :param result: dictionary, the API result
+    :param market: string, market
+    :return: dictionary, orderbook
     """
     if market == "KRAKEN":
         if "bs" in result[1]:
@@ -123,6 +148,13 @@ def get_data_from_orderbook_result(result, market):
 
 
 def get_timestamp_from_kraken_orderbook(result_kraken):
+    """
+    Returns the marketTimestamp of the orderbook for Kraken API result,
+    it depends on whether the API result is a snapshot or an update
+
+    :param result_kraken: dictionary, API result from KRAKEN
+    :return: float, market timestamp
+    """
     timestamps = []
     if "as" in result_kraken[1]:
         for level in result_kraken[1]["as"]:
@@ -141,7 +173,9 @@ def get_timestamp_from_kraken_orderbook(result_kraken):
 def get_orderbook(api_book):
     """
     Converts the orderbook into a row ready to be inserted in dataframe or processed to kdb
-    api_book is a dictionary with marketTimestamp, sym, market, bid, ask
+
+    :param api_book: dictionary, represents the orderbook
+    :return:
     """
     bids = api_book["bid"]
     asks = api_book["ask"]
@@ -162,7 +196,10 @@ def get_orderbook(api_book):
 
 def insert_orderbook_new_row_to_kdb(api_book):
     """
-    Updates kdb table quotestackevents with the new row
+    Updates orderbooks kdb table with the new row created from the orderbook
+
+    :param api_book: dictionary, last state of the orderbook
+    :return:
     """
     new_row = get_orderbook(api_book)
     kdb_row = convert_orderbook_series_to_kdb_row(new_row)

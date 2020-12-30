@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 @author: Arthurim
-@Description:
+@Description: functions to handle the creation of a ohlc data from the ECNs APIs and to persist it to kdb
 """
 import datetime
 import logging
@@ -14,6 +14,11 @@ from .utils.python_to_kdb_conversion import convert_ohlc_series_to_kdb_row
 
 
 def persist_ohlc_to_kdb(result):
+    """
+    Persists the API result to the ohlcs table
+
+    :param result: dictionary, the ohlc result from the API
+    """
     ohlc = result[1]
     app_log = logging.getLogger('root')
     app_log.info("Persisting OHLC to kdb")

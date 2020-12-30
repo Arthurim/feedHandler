@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 @author: Arthurim
-@Description:
+@Description: functions to handle the persistence of market data from WS APIs to Kdb
 """
 import datetime
 import json
@@ -14,11 +14,21 @@ from .orderbooks import persist_orderbook_to_kdb
 from .spreads import persist_spread_to_kdb
 from .trades import persist_trades_to_kdb
 from .utils.persistence_utils import get_args_for_subscription
-from .utils.websocket_message_handler import create_ws_subscription_logger, create_wss_connection_url_for_market, \
+from .utils.websocket_message_handler import create_ws_subscription_logger, create_wss_connection, \
     is_event_WS_result, is_info_WS_result
 
 
 def persist_subscription_result_to_kdb(result, subscription_type, arg=""):
+    """
+    Depending in the subscription_type, calls the required persistence function
+
+    :param result: dictionary, the result from the API call
+    :param subscription_type: string, the type of data we are persisting
+    :param arg: any argument required to handle persistence,
+            for now only a dictionary representing last state of the orderbook:
+            {"sym": sym, "market": market, "marketTimestamp": {}, "bid": {}, "ask": {}}
+    :return: the updated arg
+    """
     if subscription_type == "orderbooks":
         arg = persist_orderbook_to_kdb(arg, result)
     elif subscription_type == "trades":
@@ -32,12 +42,13 @@ def persist_subscription_result_to_kdb(result, subscription_type, arg=""):
     return arg
 
 
-def create_ws_subscription_kdb_persister(subscription_type, sym, market, depth=10):
+def create_ws_subscription_kdb_persister(subscription_type, sym, market):
     """
     Creates a WS subscription subscription_type for a given market and instrument
-    subscription_type can be: trades, orderbooks,
-    sym: XBTUSD etc
-    market: see markets in SUPPORTED_MARKETS
+
+    :param subscription_type: string, the type of data we are persisting (trades, orderbooks, ohlcs, spreads)
+    :param sym: string, XBTUSD etc
+    :param market: string, see markets in SUPPORTED_MARKETS
     """
     if not is_supported_market(market):
         raise ValueError("Market not supported: " + market)
@@ -48,7 +59,7 @@ def create_ws_subscription_kdb_persister(subscription_type, sym, market, depth=1
     app_log = create_ws_subscription_logger(subscription_type, sym, market)
     app_log.info('Creating a WS' + subscription_type + ' subcscription for ' + sym + " on " + market)
     try:
-        ws = create_wss_connection_url_for_market(subscription_type, market, sym)
+        ws = create_wss_connection(subscription_type, market, sym)
         app_log.info('WS ' + subscription_type + ' subcscription for ' + sym + " on " + market + " is successful")
     except Exception as error:
         app_log.error(
@@ -79,10 +90,11 @@ def create_ws_subscription_kdb_persister(subscription_type, sym, market, depth=1
 def create_ws_subscription_kdb_persister_debug(subscription_type, sym, market, debug_time=1):
     """
     Creates a WS subscription subscription_type for a given market and instrument for debug_time minutes
-    subscription_type can be: trades, orderbooks,
-    sym: XBTUSD etc
-    market: see markets in SUPPORTED_MARKETS
-    debug_time: duration of the subscription in minutes
+
+    :param debug_time: int, duration in minutes for the persistence
+    :param subscription_type: string, the type of data we are persisting (trades, orderbooks, ohlcs, spreads)
+    :param sym: string, XBTUSD etc
+    :param market: string, see markets in SUPPORTED_MARKETS
     """
     end_time = datetime.datetime.now() + datetime.timedelta(0, 60 * debug_time)
     if not is_supported_market(market):
@@ -94,7 +106,7 @@ def create_ws_subscription_kdb_persister_debug(subscription_type, sym, market, d
     app_log = create_ws_subscription_logger(subscription_type, sym, market)
     app_log.info('Creating a WS' + subscription_type + ' subcscription for ' + sym + " on " + market)
     try:
-        ws = create_wss_connection_url_for_market(subscription_type, market, sym)
+        ws = create_wss_connection(subscription_type, market, sym)
         app_log.info('WS ' + subscription_type + ' subcscription for ' + sym + " on " + market + " is successful")
     except Exception as error:
         app_log.error(

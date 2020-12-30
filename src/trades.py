@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 @author: Arthurim
-@Description:
+@Description: functions to handle the creation of a trade table from the ECNs APIs and to persist it to kdb
 """
 import datetime
 import logging
@@ -15,8 +15,9 @@ from .utils.python_to_kdb_conversion import convert_trades_series_to_kdb_row
 
 def persist_trades_to_kdb(result):
     """
-    Persists the result of the Webscoket API to Kdb
-    :param result: a dictionary containg the result from API call
+    Persists the trades result of the Webscoket API to Kdb
+
+    :param result: a dictionary containing the trades result from API call
     :return:
     """
     app_log = logging.getLogger('root')

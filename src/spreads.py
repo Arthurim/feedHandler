@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 @author: Arthurim
-@Description:
+@Description: functions to handle the creation of a spread table from the ECNs APIs and to persist it to kdb
 """
 import datetime
 import logging
@@ -14,6 +14,12 @@ from .utils.python_to_kdb_conversion import convert_spread_to_kdb_row
 
 
 def persist_spread_to_kdb(result):
+    """
+    Persists the spread result of the Webscoket API to Kdb
+
+    :param result: a dictionary containing the spread result from API call
+    :return:
+    """
     spread = result[1]
     app_log = logging.getLogger('root')
     app_log.info("Persisting spread to kdb")

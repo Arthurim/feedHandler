@@ -1,39 +1,51 @@
 #!/usr/bin/env python3
 """
 @author: Arthurim
-@Description:
+@Description: various functions to convert to kdb
 """
 
 
-def convert_trades_series_to_kdb_row(new_row):
+def convert_trades_series_to_kdb_row(row):
+       """
+       :param row: pd.series, obtained from persist_trades_to_kdb
+       :return: str, kdb row ready to be inserted
+       """
     return ".z.N;" + \
-           "`" + new_row["sym"].replace("/", "") + ";" + \
+           "`" + row["sym"].replace("/", "") + ";" + \
            ".z.p;" + \
-           "`timestamp$" + new_row["tradeTimestamp"] + ";" + \
-           "`" + new_row["market"] + ";" + \
-           "`$\"" + new_row["tradeId"] + "\";" + \
-           "`" + new_row["side"] + ";" + \
-           str(new_row["price"]) + ";" + \
-           str(new_row["lhsFlow"]) + ";" + \
-           str(new_row["rhsFlow"]) + ";" + \
-           "`" + new_row["orderType"] + ";" + \
-           new_row["misc"]
+           "`timestamp$" + row["tradeTimestamp"] + ";" + \
+           "`" + row["market"] + ";" + \
+           "`$\"" + row["tradeId"] + "\";" + \
+           "`" + row["side"] + ";" + \
+           str(row["price"]) + ";" + \
+           str(row["lhsFlow"]) + ";" + \
+           str(row["rhsFlow"]) + ";" + \
+           "`" + row["orderType"] + ";" + \
+           row["misc"]
 
 
-def convert_orderbook_series_to_kdb_row(new_row):
+def convert_orderbook_series_to_kdb_row(row):
+       """
+       :param row: pd.series, obtained from persist_orderbook_to_kdb
+       :return: str, kdb row ready to be inserted
+       """
     return ".z.N;" + \
-           "`" + new_row["sym"].replace("/", "") + ";" + \
+           "`" + row["sym"].replace("/", "") + ";" + \
            ".z.p;" + \
-           "`timestamp$" + new_row["marketTimestamp"] + ";" + \
-           "`$\"" + new_row["quoteId"] + "\";" + \
-           "`" + new_row["market"] + ";" + \
-           str(new_row["bidPrices"]).replace("[", "(").replace("]", ")") + ";" + \
-           str(new_row["bidSizes"]).replace("[", "(").replace("]", ")") + ";" + \
-           str(new_row["offerPrices"]).replace("[", "(").replace("]", ")") + ";" + \
-           str(new_row["offerPrices"]).replace("[", "(").replace("]", ")")
+           "`timestamp$" + row["marketTimestamp"] + ";" + \
+           "`$\"" + row["quoteId"] + "\";" + \
+           "`" + row["market"] + ";" + \
+           str(row["bidPrices"]).replace("[", "(").replace("]", ")") + ";" + \
+           str(row["bidSizes"]).replace("[", "(").replace("]", ")") + ";" + \
+           str(row["offerPrices"]).replace("[", "(").replace("]", ")") + ";" + \
+           str(row["offerPrices"]).replace("[", "(").replace("]", ")")
 
 
 def convert_spread_to_kdb_row(row):
+       """
+       :param row: pd.series, obtained from persist_spread_to_kdb
+       :return: str, kdb row ready to be inserted
+       """
     return ".z.N;" + \
            "`" + row["sym"].replace("/", "") + ";" + \
            ".z.p;" + \
@@ -46,6 +58,10 @@ def convert_spread_to_kdb_row(row):
 
 
 def convert_ohlc_series_to_kdb_row(row):
+       """
+       :param row: pd.series, obtained from persist_ohlc_to_kdb
+       :return: str, kdb row ready to be inserted
+       """
     return ".z.N;" + \
            "`" + row["sym"].replace("/", "") + ";" + \
            ".z.p;" + \

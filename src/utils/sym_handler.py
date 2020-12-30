@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
 @author: Arthurim
-@Description:
+@Description: various utilis for sym handling
 """
 
 
 def get_sym_format(sym, market):
     """
+    Formats the sym to adapt to ECN format, eg XBTUSD will be XBT/USD for Kraken
 
     :param sym: should be a string of 6 letters
     :param market: should be a string

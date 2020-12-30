@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
 @author: Arthurim
-@Description:
+@Description: information relative to markets
 """
 
+# TODO Add COINBASE
 SUPPORTED_MARKETS = ["KRAKEN", "BINANCE", "BITMEX", "BITFINEX"]
 
 
