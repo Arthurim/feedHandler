@@ -10,6 +10,8 @@ from logging.handlers import RotatingFileHandler
 
 from websocket import create_connection
 
+from .sym_handler import get_sym_format
+
 
 def create_wss_connection(subscription_type, market, sym):
     """
@@ -20,6 +22,7 @@ def create_wss_connection(subscription_type, market, sym):
     :param sym: str
     :return: websocket
     """
+    sym = get_sym_format(sym, market)
     if market == "KRAKEN":
         ws = create_connection("wss://ws.kraken.com")
         if subscription_type == "orderbooks":
@@ -50,6 +53,13 @@ def create_wss_connection(subscription_type, market, sym):
         ws = create_connection("wss://www.bitmex.com/realtime")
         if subscription_type == "orderbooks":
             ws.send(json.dumps({"op": "subscribe", "args": ["orderBook10:" + sym]}))
+        else:
+            raise ValueError(
+                "This subscription_type is not yet supported: " + str(subscription_type) + " for market: " + market)
+    elif market == "COINBASE":
+        ws = create_connection("wss://ws-feed.pro.coinbase.com")
+        if subscription_type == "orderbooks":
+            ws.send(json.dumps({"type": "subscribe", "product_ids": [sym], "channels": ["level2"]}))
         else:
             raise ValueError(
                 "This subscription_type is not yet supported: " + str(subscription_type) + " for market: " + market)
@@ -96,6 +106,8 @@ def is_event_WS_result(result):
 
 def is_info_WS_result(result):
     if type(result) == dict:
-        return "info" in result.keys()
-    else:
-        return False
+        if "info" in result.keys():
+            return True
+        if "type" in result.keys():
+            return result["type"] == "subscriptions"
+    return False

@@ -5,7 +5,7 @@
 """
 
 # TODO Add COINBASE
-SUPPORTED_MARKETS = ["KRAKEN", "BINANCE", "BITMEX", "BITFINEX"]
+SUPPORTED_MARKETS = ["KRAKEN", "BINANCE", "BITMEX", "BITFINEX", "COINBASE"]
 
 
 def is_supported_market(market):

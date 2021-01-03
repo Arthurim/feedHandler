@@ -17,5 +17,8 @@ def get_sym_format(sym, market):
         raise ValueError("sym input should be a string of 6 letters, it was: ", sym)
     if market == "KRAKEN":
         return sym[0:3] + "/" + sym[3:6]
+    elif market == "COINBASE":
+        sym = sym.replace("XBT", "BTC")
+        return sym[0:3] + "-" + sym[3:6]
     else:
         return sym

@@ -144,6 +144,20 @@ def get_data_from_orderbook_result(result, market):
                 "marketTimestamp": result["data"][0]['timestamp']}
     elif market == "BITFINEX":
         data = {"bids": result[1][0:25], "asks": result[1][25:], "marketTimestamp": ""}
+    elif market == "COINBASE":
+        if result["type"] == "snapshot":
+            data = {"bids": result["bids"], "asks": result["asks"],
+                    "marketTimestamp": datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f")}
+        elif result["type"] == "l2update":
+            if result["changes"][0][0] == "buy":
+                data = {"b": [], "marketTimestamp": datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f")}
+            else:
+                data = {"a": [], "marketTimestamp": datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f")}
+            for change in result["changes"]:
+                if change[0] == "buy":
+                    data["b"].append([change[1], change[2]])
+                if change[0] == "sell":
+                    data["a"].append([change[1], change[2]])
     return data
 
 
