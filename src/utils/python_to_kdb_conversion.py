@@ -6,10 +6,10 @@
 
 
 def convert_trades_series_to_kdb_row(row):
-       """
-       :param row: pd.series, obtained from persist_trades_to_kdb
-       :return: str, kdb row ready to be inserted
-       """
+    """
+    :param row: pd.series, obtained from persist_trades_to_kdb
+    :return: str, kdb row ready to be inserted
+    """
     return ".z.N;" + \
            "`" + row["sym"].replace("/", "") + ";" + \
            ".z.p;" + \
@@ -25,10 +25,10 @@ def convert_trades_series_to_kdb_row(row):
 
 
 def convert_orderbook_series_to_kdb_row(row):
-       """
-       :param row: pd.series, obtained from persist_orderbook_to_kdb
-       :return: str, kdb row ready to be inserted
-       """
+    """
+    :param row: pd.series, obtained from persist_orderbook_to_kdb
+    :return: str, kdb row ready to be inserted
+    """
     return ".z.N;" + \
            "`" + row["sym"].replace("/", "") + ";" + \
            ".z.p;" + \
@@ -42,10 +42,10 @@ def convert_orderbook_series_to_kdb_row(row):
 
 
 def convert_spread_to_kdb_row(row):
-       """
-       :param row: pd.series, obtained from persist_spread_to_kdb
-       :return: str, kdb row ready to be inserted
-       """
+    """
+    :param row: pd.series, obtained from persist_spread_to_kdb
+    :return: str, kdb row ready to be inserted
+    """
     return ".z.N;" + \
            "`" + row["sym"].replace("/", "") + ";" + \
            ".z.p;" + \
@@ -58,10 +58,10 @@ def convert_spread_to_kdb_row(row):
 
 
 def convert_ohlc_series_to_kdb_row(row):
-       """
-       :param row: pd.series, obtained from persist_ohlc_to_kdb
-       :return: str, kdb row ready to be inserted
-       """
+    """
+    :param row: pd.series, obtained from persist_ohlc_to_kdb
+    :return: str, kdb row ready to be inserted
+    """
     return ".z.N;" + \
            "`" + row["sym"].replace("/", "") + ";" + \
            ".z.p;" + \
