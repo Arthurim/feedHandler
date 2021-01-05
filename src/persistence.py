@@ -32,7 +32,7 @@ def persist_subscription_result_to_kdb(result, subscription_type, arg=""):
     if subscription_type == "orderbooks":
         arg = persist_orderbook_to_kdb(arg, result)
     elif subscription_type == "trades":
-        persist_trades_to_kdb(result)
+        persist_trades_to_kdb(result, arg)
     elif subscription_type == "ohlcs":
         persist_ohlc_to_kdb(result)
     elif subscription_type == "spreads":
@@ -129,6 +129,6 @@ def create_ws_subscription_kdb_persister_debug(subscription_type, sym, market, d
                 arg = persist_subscription_result_to_kdb(result, subscription_type, arg)
         except Exception as error:
             app_log.error(
-                'WS ' + subscription_type + ' subcscription for ' + sym + " on " + market + ' - create_ws_subscription_orderbook - Caught this error: ' + repr(
+                'WS ' + subscription_type + ' subcscription for ' + sym + " on " + market + ' - Caught this error: ' + repr(
                     error))
             time.sleep(3)

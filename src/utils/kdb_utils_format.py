@@ -5,6 +5,15 @@
 """
 
 
+def convert_sym_to_kdb_format(sym):
+    """
+    Formats the sym from the API to the sym format we have in kdb
+    :param sym:
+    :return:
+    """
+    return sym.replace("-", "").replace("/", "").replace("BTC", "XBT")
+
+
 def has_kdb_format_time(d_time):
     """
     Parses the input and returns True if it has kdb time format: "16:45:11.123456"

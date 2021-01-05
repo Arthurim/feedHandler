@@ -3,6 +3,7 @@
 @author: Arthurim
 @Description: various functions to convert to kdb
 """
+from .kdb_utils_format import convert_sym_to_kdb_format
 
 
 def convert_trades_series_to_kdb_row(row):
@@ -11,17 +12,17 @@ def convert_trades_series_to_kdb_row(row):
     :return: str, kdb row ready to be inserted
     """
     return ".z.N;" + \
-           "`" + row["sym"].replace("/", "") + ";" + \
+           "`" + convert_sym_to_kdb_format(row["sym"]) + ";" + \
            ".z.p;" + \
            "`timestamp$" + row["tradeTimestamp"] + ";" + \
            "`" + row["market"] + ";" + \
-           "`$\"" + row["tradeId"] + "\";" + \
+           "`$\"" + str(row["tradeId"]) + "\";" + \
            "`" + row["side"] + ";" + \
            str(row["price"]) + ";" + \
            str(row["lhsFlow"]) + ";" + \
            str(row["rhsFlow"]) + ";" + \
-           "`" + row["orderType"] + ";" + \
-           row["misc"]
+           "`$\"" + row["orderType"] + "\";" + \
+           "\"" + row["misc"] + "\""
 
 
 def convert_orderbook_series_to_kdb_row(row):
@@ -30,7 +31,7 @@ def convert_orderbook_series_to_kdb_row(row):
     :return: str, kdb row ready to be inserted
     """
     return ".z.N;" + \
-           "`" + row["sym"].replace("/", "") + ";" + \
+           "`" + convert_sym_to_kdb_format(row["sym"]) + ";" + \
            ".z.p;" + \
            "`timestamp$" + row["marketTimestamp"] + ";" + \
            "`$\"" + row["quoteId"] + "\";" + \
@@ -47,7 +48,7 @@ def convert_spread_to_kdb_row(row):
     :return: str, kdb row ready to be inserted
     """
     return ".z.N;" + \
-           "`" + row["sym"].replace("/", "") + ";" + \
+           "`" + convert_sym_to_kdb_format(row["sym"]) + ";" + \
            ".z.p;" + \
            "`timestamp$" + row["marketTimestamp"] + ";" + \
            "`" + row["market"] + ";" + \
@@ -63,7 +64,7 @@ def convert_ohlc_series_to_kdb_row(row):
     :return: str, kdb row ready to be inserted
     """
     return ".z.N;" + \
-           "`" + row["sym"].replace("/", "") + ";" + \
+           "`" + convert_sym_to_kdb_format(row["sym"]) + ";" + \
            ".z.p;" + \
            "`timestamp$" + row["marketTimestamp"] + ";" + \
            "`" + row["market"] + ";" + \

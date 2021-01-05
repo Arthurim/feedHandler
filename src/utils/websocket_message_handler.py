@@ -39,6 +39,8 @@ def create_wss_connection(subscription_type, market, sym):
     elif market == "BINANCE":
         if subscription_type == "orderbooks":
             ws = create_connection("wss://stream.binance.com:9443/ws/" + sym + "@depth10")
+        elif subscription_type == "trades":
+            ws = create_connection("wss://stream.binance.com:9443/ws/" + sym + "@trade")
         else:
             raise ValueError(
                 "This subscription_type is not yet supported: " + str(subscription_type) + " for market: " + market)
@@ -60,6 +62,8 @@ def create_wss_connection(subscription_type, market, sym):
         ws = create_connection("wss://ws-feed.pro.coinbase.com")
         if subscription_type == "orderbooks":
             ws.send(json.dumps({"type": "subscribe", "product_ids": [sym], "channels": ["level2"]}))
+        elif subscription_type == "trades":
+            ws.send(json.dumps({"type": "subscribe", "product_ids": [sym], "channels": ["matches"]}))
         else:
             raise ValueError(
                 "This subscription_type is not yet supported: " + str(subscription_type) + " for market: " + market)
@@ -76,7 +80,7 @@ def create_ws_subscription_logger(subscription_type, sym, market):
     :param market: str
     :return: logger
     """
-    log_formatter = logging.Formatter('%(asctime)s %(levelname)s %(funcName)s(%(lineno)d) %(message)s')
+    log_formatter = logging.Formatter('%(asctime)s %(levelname)s %(funcName)s (%(lineno)d) %(message)s')
     # TODO: exctract path as a global variable ?
     logFile = 'C:/dev/log/marketdata/log_' + subscription_type + '_' + market + "_" + sym + "_" + datetime.datetime.now().strftime(
         "%Y-%m-%d-%H-%M-%S-%f")

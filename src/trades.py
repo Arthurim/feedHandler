@@ -13,22 +13,16 @@ from .utils.persistence_utils import persist_row_to_table
 from .utils.python_to_kdb_conversion import convert_trades_series_to_kdb_row
 
 
-def persist_trades_to_kdb(result):
-    """
-    Persists the trades result of the Webscoket API to Kdb
-
-    :param result: a dictionary containing the trades result from API call
-    :return:
-    """
-    app_log = logging.getLogger('root')
-    app_log.info("Persisting #" + str(len(result[1])) + " trades to kdb")
-    for trade in result[1]:
-        new_row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
+def get_data_from_trades_result(result, market):
+    rows = []
+    if market == "KRAKEN":
+        for trade in result[1]:
+            row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
                              "sym": result[3],
                              "gatewayTimestamp": datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f"),
                              "tradeTimestamp": datetime.datetime.fromtimestamp(float(trade[2])).strftime(
                                  "%Y.%m.%dD%H:%M:%S.%f"),
-                             "market": "KRAKEN",
+                             "market": market,
                              "tradeId": "",
                              "side": str(trade[3]),
                              "price": float(trade[0]),
@@ -37,5 +31,37 @@ def persist_trades_to_kdb(result):
                              "orderType": str(trade[4]),
                              "misc": str('""' if trade[5] == '' else trade[5])
                              })
+            rows.append(row)
+    elif market == "BINANCE":
+        row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
+                         "sym": result["s"],
+                         "gatewayTimestamp": datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f"),
+                         "tradeTimestamp": datetime.datetime.fromtimestamp(float(result["T"]) / 1e3).strftime(
+                             "%Y.%m.%dD%H:%M:%S.%f"),
+                         "market": market,
+                         "tradeId": result["t"],
+                         "side": "sell" if result["m"] else "buy",
+                         "price": float(result["p"]),
+                         "lhsFlow": float(result["q"]),
+                         "rhsFlow": float(result["p"]) * float(result["q"]),
+                         "orderType": "",
+                         "misc": ""
+                         })
+        rows.append(row)
+    return rows
+
+
+def persist_trades_to_kdb(result, market):
+    """
+    Persists the trades result of the Webscoket API to Kdb
+
+    :param market: string
+    :param result: a dictionary containing the trades result from API call
+    :return:
+    """
+    app_log = logging.getLogger('root')
+    # app_log.info("Persisting #" + str(len(result[1])) + " trades to kdb")
+    new_rows = get_data_from_trades_result(result, market)
+    for new_row in new_rows:
         kdb_row = convert_trades_series_to_kdb_row(new_row)
         persist_row_to_table(kdb_row, "trades", MARKET_DATA_KDB_HOST, MARKET_DATA_TP)
