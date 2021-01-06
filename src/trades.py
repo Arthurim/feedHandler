@@ -48,6 +48,24 @@ def get_data_from_trades_result(result, market):
                          "misc": ""
                          })
         rows.append(row)
+    elif market == "BITMEX":
+        for trade in result["data"]:
+            row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
+                             "sym": trade["symbol"],
+                             "gatewayTimestamp": datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f"),
+                             "tradeTimestamp": datetime.datetime.strptime(trade["timestamp"],
+                                                                          '%Y-%m-%dT%H:%M:%S.%fZ').strftime(
+                                 "%Y.%m.%dD%H:%M:%S.%f"),
+                             "market": market,
+                             "tradeId": str(trade["trdMatchID"]),
+                             "side": str(trade["side"]),
+                             "price": float(trade["price"]),
+                             "lhsFlow": float(trade["size"]),
+                             "rhsFlow": float(trade["size"]) * float(trade["price"]),
+                             "orderType": "",
+                             "misc": ""
+                             })
+            rows.append(row)
     return rows
 
 
