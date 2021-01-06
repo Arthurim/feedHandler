@@ -55,6 +55,8 @@ def create_wss_connection(subscription_type, market, sym):
         ws = create_connection("wss://www.bitmex.com/realtime")
         if subscription_type == "orderbooks":
             ws.send(json.dumps({"op": "subscribe", "args": ["orderBook10:" + sym]}))
+        elif subscription_type == "trades":
+            ws.send(json.dumps({"op": "subscribe", "args": ["trade:" + sym]}))
         else:
             raise ValueError(
                 "This subscription_type is not yet supported: " + str(subscription_type) + " for market: " + market)
