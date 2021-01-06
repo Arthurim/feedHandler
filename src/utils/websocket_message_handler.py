@@ -45,9 +45,10 @@ def create_wss_connection(subscription_type, market, sym):
             raise ValueError(
                 "This subscription_type is not yet supported: " + str(subscription_type) + " for market: " + market)
     elif market == "BITFINEX":
-        ws = create_connection("wss://api-pub.bitfinex.com/ws/2")
+        ws = create_connection("wss://api.bitfinex.com/ws/2")
         if subscription_type == "orderbooks":
-            ws.send(json.dumps({"event": "subscribe", "channel": "book", "prec": "R0", "symbol": "t" + sym}))
+            ws.send(json.dumps(
+                {"event": "subscribe", "channel": "book", "prec": "P0", "length": "10", "symbol": "t" + sym}))
         else:
             raise ValueError(
                 "This subscription_type is not yet supported: " + str(subscription_type) + " for market: " + market)

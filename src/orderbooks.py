@@ -143,7 +143,12 @@ def get_data_from_orderbook_result(result, market):
         data = {"bids": result["data"][0]["bids"], "asks": result["data"][0]["asks"],
                 "marketTimestamp": result["data"][0]['timestamp']}
     elif market == "BITFINEX":
-        data = {"bids": result[1][0:25], "asks": result[1][25:], "marketTimestamp": ""}
+        data = {"bids": [], "asks": [], "marketTimestamp": datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f")}
+        if type(result[1][0]) is list:
+            for level in result[1]:
+                data = update_level_bitfinex(data, level)
+        else:
+            data = update_level_bitfinex(data, result[1])
     elif market == "COINBASE":
         if result["type"] == "snapshot":
             data = {"bids": result["bids"], "asks": result["asks"],
@@ -158,6 +163,18 @@ def get_data_from_orderbook_result(result, market):
                     data["b"].append([change[1], change[2]])
                 if change[0] == "sell":
                     data["a"].append([change[1], change[2]])
+    return data
+
+
+def update_level_bitfinex(data, level):
+    price = level[0]
+    count = level[1]
+    size = level[2]
+    if count > 0:
+        if size > 0:
+            data["bids"].append([price, size])
+        else:
+            data["asks"].append([price, -size])
     return data
 
 
