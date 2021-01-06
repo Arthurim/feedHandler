@@ -66,6 +66,23 @@ def get_data_from_trades_result(result, market):
                              "misc": ""
                              })
             rows.append(row)
+    elif market == "COINBASE":
+        row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
+                         "sym": result["product_id"],
+                         "gatewayTimestamp": datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f"),
+                         "tradeTimestamp": datetime.datetime.strptime(result["time"],
+                                                                      '%Y-%m-%dT%H:%M:%S.%fZ').strftime(
+                             "%Y.%m.%dD%H:%M:%S.%f"),
+                         "market": market,
+                         "tradeId": result["trade_id"],
+                         "side": result["side"],
+                         "price": float(result["price"]),
+                         "lhsFlow": float(result["size"]),
+                         "rhsFlow": float(result["price"]) * float(result["size"]),
+                         "orderType": "",
+                         "misc": ""
+                         })
+        rows.append(row)
     return rows
 
 
