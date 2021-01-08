@@ -7,7 +7,7 @@
 
 import sys
 
-from src.persistence import create_ws_subscription_kdb_persister_debug
+from persistence import create_ws_subscription_kdb_persister_debug
 
 create_ws_subscription_kdb_persister_debug(subscription_type=sys.argv[1],
                                            sym=sys.argv[2],
