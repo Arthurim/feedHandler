@@ -15,17 +15,33 @@ def get_sym_format(sym, market):
     """
     if not len(sym) >= 6:
         raise ValueError("sym input should be a string of 6 letters, it was: ", sym)
-    if market == "KRAKEN":
-        return sym[0:3] + "/" + sym[3:6]
-    elif market == "COINBASE":
-        sym = sym.replace("XBT", "BTC")
-        return sym[0:3] + "-" + sym[3:6]
-    elif market == "BINANCE":
-        sym = sym.replace("XBT", "BTC").lower()
-        return sym
-    elif market == "BITFINEX":
-        return sym.replace("XBT", "BTC")
-    elif market == "HUOBI":
-        return sym.replace("XBT", "BTC").lower()
+    if is_spot(sym):
+        if market == "KRAKEN":
+            return sym[0:3] + "/" + sym[3:6]
+        elif market == "COINBASE":
+            sym = sym.replace("XBT", "BTC")
+            return sym[0:3] + "-" + sym[3:6]
+        elif market == "BINANCE":
+            sym = sym.replace("XBT", "BTC").lower()
+            return sym
+        elif market == "BITFINEX":
+            return sym.replace("XBT", "BTC")
+        elif market == "HUOBI":
+            return sym.replace("XBT", "BTC").lower()
+        else:
+            return sym
+    elif is_future(sym):
+        if market == "KRAKEN":
+            return "FI_" + sym.replace("/Future", "").replace("/", "_")
+        else:
+            return sym
     else:
-        return sym
+        raise ValueError("Unknow instrument type for " + sym)
+
+
+def is_spot(sym):
+    return not is_future(sym)
+
+
+def is_future(sym):
+    return len(sym.split("/")) == 3 or len(sym.split("_")) == 3

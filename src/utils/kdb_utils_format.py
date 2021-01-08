@@ -3,6 +3,7 @@
 @author: Arthurim
 @Description: Functions utils relating to kdb
 """
+from .sym_handler import is_spot
 
 
 def convert_sym_to_kdb_format(sym):
@@ -11,7 +12,10 @@ def convert_sym_to_kdb_format(sym):
     :param sym:
     :return:
     """
-    return sym.replace("-", "").replace("/", "").replace("BTC", "XBT")
+    if is_spot(sym):
+        return sym.replace("-", "").replace("/", "").replace("BTC", "XBT")
+    else:
+        return sym.replace("-", "").replace("_", "/").replace("BTC", "XBT")
 
 
 def has_kdb_format_time(d_time):

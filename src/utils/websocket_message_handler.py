@@ -24,18 +24,30 @@ def create_wss_connection(subscription_type, market, sym):
     """
     sym = get_sym_format(sym, market)
     if market == "KRAKEN":
-        ws = create_connection("wss://ws.kraken.com")
-        if subscription_type == "orderbooks":
-            ws.send(json.dumps({"event": "subscribe", "pair": [sym], "subscription": {"name": "book", "depth": 10}}))
-        elif subscription_type == "trades":
-            ws.send(json.dumps({"event": "subscribe", "pair": [sym], "subscription": {"name": "trade"}}))
-        elif subscription_type == "ohlcs":
-            ws.send(json.dumps({"event": "subscribe", "pair": [sym], "subscription": {"name": "ohlc", "interval": 5}}))
-        elif subscription_type == "spreads":
-            ws.send(json.dumps({"event": "subscribe", "pair": [sym], "subscription": {"name": "spread"}}))
+        if is_spot(sym):
+            ws = create_connection("wss://ws.kraken.com")
+            if subscription_type == "orderbooks":
+                ws.send(
+                    json.dumps({"event": "subscribe", "pair": [sym], "subscription": {"name": "book", "depth": 10}}))
+            elif subscription_type == "trades":
+                ws.send(json.dumps({"event": "subscribe", "pair": [sym], "subscription": {"name": "trade"}}))
+            elif subscription_type == "ohlcs":
+                ws.send(
+                    json.dumps({"event": "subscribe", "pair": [sym], "subscription": {"name": "ohlc", "interval": 5}}))
+            elif subscription_type == "spreads":
+                ws.send(json.dumps({"event": "subscribe", "pair": [sym], "subscription": {"name": "spread"}}))
+            else:
+                raise ValueError(
+                    "This subscription_type is not yet supported: " + str(subscription_type) + " for market: " + market)
+        elif is_future(sym):
+            ws = create_connection("wss://futures.kraken.com/ws/v1")
+            if subscription_type == "orderbooks":
+                ws.send(json.dumps({"event": "subscribe", "product_ids": [sym], "feed": "book"}))
+            else:
+                raise ValueError(
+                    "This subscription_type is not yet supported: " + str(subscription_type) + " for market: " + market)
         else:
-            raise ValueError(
-                "This subscription_type is not yet supported: " + str(subscription_type) + " for market: " + market)
+            raise ValueError("Instrument type not supported for:" + sym)
     elif market == "BINANCE":
         if subscription_type == "orderbooks":
             ws = create_connection("wss://stream.binance.com:9443/ws/" + sym + "@depth10")
@@ -94,7 +106,8 @@ def create_ws_subscription_logger(subscription_type, sym, market):
     """
     log_formatter = logging.Formatter('%(asctime)s %(levelname)s %(funcName)s (%(lineno)d) %(message)s')
     # TODO: exctract path as a global variable ?
-    logFile = 'C:/dev/log/marketdata/log_' + subscription_type + '_' + market + "_" + sym + "_" + datetime.datetime.now().strftime(
+    logFile = 'C:/dev/log/marketdata/log_' + subscription_type + '_' + market + "_" + sym.replace("/",
+                                                                                                  "_") + "_" + datetime.datetime.now().strftime(
         "%Y-%m-%d-%H-%M-%S-%f")
     my_handler = RotatingFileHandler(logFile, mode='a', maxBytes=5 * 1024 * 1024,
                                      backupCount=2, encoding=None, delay=0)

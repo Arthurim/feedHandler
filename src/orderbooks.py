@@ -10,8 +10,9 @@ from uuid import uuid4
 import pandas as pd
 
 from .constants.kdb_hosts import MARKET_DATA_KDB_HOST, MARKET_DATA_TP
-from .utils.kdb_utils_format import has_kdb_format_timestamp
+from .utils.kdb_utils_format import has_kdb_format_timestamp, convert_sym_to_kdb_format
 from .utils.persistence_utils import persist_row_to_table
+from .utils.sym_handler import is_spot, is_future
 
 
 def dicttofloat(keyvalue):
@@ -97,27 +98,27 @@ def persist_orderbook_to_kdb(api_book, result, depth=10):
         else:
             api_book["marketTimestamp"] = datetime.datetime.fromtimestamp(float(result["marketTimestamp"])).strftime(
                 "%Y.%m.%dD%H:%M:%S.%f")
-    insert_orderbook_new_row_to_kdb(api_book)
+    insert_orderbook_row_to_kdb(api_book)
     return api_book
 
 
-def convert_orderbook_series_to_kdb_row(new_row):
+def convert_orderbook_series_to_kdb_row(row):
     """
     Converts a pd.series row representing the orderbook to a string to insert into kdb
 
-    :param new_row: pd.series, a row representing the orderbook, obtained from get_orderbook
+    :param row: pd.series, a row representing the orderbook, obtained from get_orderbook
     :return: str, the string representation of the orderbook, to insert as a new row in kdb
     """
     return ".z.N;" + \
-           "`" + new_row["sym"].replace("/", "") + ";" + \
+           "`$\"" + convert_sym_to_kdb_format(row["sym"]) + "\";" + \
            ".z.p;" + \
-           "`timestamp$" + new_row["marketTimestamp"] + ";" + \
-           "`$\"" + new_row["quoteId"] + "\";" + \
-           "`" + new_row["market"] + ";" + \
-           str(new_row["bidPrices"]).replace("[", "(").replace("]", ")") + ";" + \
-           str(new_row["bidSizes"]).replace("[", "(").replace("]", ")") + ";" + \
-           str(new_row["offerPrices"]).replace("[", "(").replace("]", ")") + ";" + \
-           str(new_row["offerPrices"]).replace("[", "(").replace("]", ")")
+           "`timestamp$" + row["marketTimestamp"] + ";" + \
+           "`$\"" + row["quoteId"] + "\";" + \
+           "`" + row["market"] + ";" + \
+           str(row["bidPrices"]).replace("[", "(").replace("]", ")") + ";" + \
+           str(row["bidSizes"]).replace("[", "(").replace("]", ")") + ";" + \
+           str(row["offerPrices"]).replace("[", "(").replace("]", ")") + ";" + \
+           str(row["offerPrices"]).replace("[", "(").replace("]", ")")
 
 
 def get_data_from_orderbook_result(result, market):
@@ -129,13 +130,34 @@ def get_data_from_orderbook_result(result, market):
     :return: dictionary, orderbook
     """
     if market == "KRAKEN":
-        if "bs" in result[1]:
-            data = {"bids": result[1]["bs"], "asks": result[1]["as"],
-                    "marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
-        elif "b" in result[1]:
-            data = {"b": result[1]["b"], "marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
-        elif "a" in result[1]:
-            data = {"a": result[1]["a"], "marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
+        sym = result["product_id"]
+        if is_spot(sym):
+            if "bs" in result[1]:
+                data = {"bids": result[1]["bs"], "asks": result[1]["as"],
+                        "marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
+            elif "b" in result[1]:
+                data = {"b": result[1]["b"], "marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
+            elif "a" in result[1]:
+                data = {"a": result[1]["a"], "marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
+        elif is_future(sym):
+            if "bids" in result.keys():
+                data = {"bids": process_kraken_future_orderbook_side(result["bids"]),
+                        "asks": process_kraken_future_orderbook_side(result["asks"]),
+                        "marketTimestamp": datetime.datetime.fromtimestamp(float(result["timestamp"]) / 1e3).strftime(
+                            "%Y.%m.%dD%H:%M:%S.%f")}
+            elif "side" in result.keys():
+                if result["side"] == "buy":
+                    data = {"bids": [[result["price"], result["qty"]]],
+                            "asks": [],
+                            "marketTimestamp": datetime.datetime.fromtimestamp(
+                                float(result["timestamp"]) / 1e3).strftime(
+                                "%Y.%m.%dD%H:%M:%S.%f")}
+                elif result["side"] == "sell":
+                    data = {"bids": [],
+                            "asks": [[result["price"], result["qty"]]],
+                            "marketTimestamp": datetime.datetime.fromtimestamp(
+                                float(result["timestamp"]) / 1e3).strftime(
+                                "%Y.%m.%dD%H:%M:%S.%f")}
     elif market == "BINANCE":
         result["marketTimestamp"] = datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f")
         data = result
@@ -216,7 +238,7 @@ def get_orderbook(api_book):
     asks = api_book["ask"]
     bid_prices, bid_sizes = process_side(bids)
     offer_prices, offer_sizes = process_side(asks)
-    new_row = pd.Series({"gatewayTimestamp": datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f"),
+    row = pd.Series({"gatewayTimestamp": datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f"),
                          "marketTimestamp": api_book["marketTimestamp"],
                          "time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
                          "quoteId": str(uuid4()).replace("-", ""),
@@ -226,16 +248,31 @@ def get_orderbook(api_book):
                          "bidSizes": bid_sizes,
                          "offerPrices": offer_prices,
                          "offerSizes": offer_sizes})
-    return new_row
+    return row
 
 
-def insert_orderbook_new_row_to_kdb(api_book):
+def insert_orderbook_row_to_kdb(api_book):
     """
     Updates orderbooks kdb table with the new row created from the orderbook
 
     :param api_book: dictionary, last state of the orderbook
     :return:
     """
-    new_row = get_orderbook(api_book)
-    kdb_row = convert_orderbook_series_to_kdb_row(new_row)
+    row = get_orderbook(api_book)
+    kdb_row = convert_orderbook_series_to_kdb_row(row)
     persist_row_to_table(kdb_row, "orderbooks", MARKET_DATA_KDB_HOST, MARKET_DATA_TP)
+
+
+def process_kraken_future_orderbook_side(side):
+    """
+
+    :param side: is a list of dictionary, representing all the levels of that side of the orderbook,
+    eg: [{"price":31,"qty":4},{"price":32,"qty":5},{"price":33,"qty":4}]
+    :return: [[price,size],[price,size],[price,size]]
+    """
+    side_result = []
+    for level in side:
+        price = level["price"]
+        size = level["qty"]
+        side_result.append([price, size])
+    return side_result
