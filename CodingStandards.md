@@ -1,12 +1,18 @@
 # Coding Standards
 
 ## Contributing to the project
+
+### Creating a branch
 Please create a branch off `master` and name it:
  - `feature/Adding_this_feature` if it is to add a new feature
  - `fix/Fixing_this_function` if it is to fix an existing feature
  then create a PR and add me as a reviewer.
  As a rule of thumb always test your code before raising a PR.
  
+### Raising a Pull Request
+Before raising a PR, please run the relevant unit tests and make sure they all pass.
+If the failure is not related to your change, raise your PR and notify me of the failing test + the reason.
+
 ## Naming conventions
 
 ### TLDR
