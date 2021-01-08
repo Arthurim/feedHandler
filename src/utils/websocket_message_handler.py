@@ -10,7 +10,7 @@ from logging.handlers import RotatingFileHandler
 
 from websocket import create_connection
 
-from .sym_handler import get_sym_format
+from .sym_handler import get_sym_format, is_spot, is_future
 
 
 def create_wss_connection(subscription_type, market, sym):
@@ -70,6 +70,15 @@ def create_wss_connection(subscription_type, market, sym):
         else:
             raise ValueError(
                 "This subscription_type is not yet supported: " + str(subscription_type) + " for market: " + market)
+    elif market == "HUOBI":
+        ws = create_connection("wss://api.huobi.pro/ws")
+        if subscription_type == "orderbooks":
+            ws.send(json.dumps({"sub": "market." + sym + ".depth.step0", "id": "id1"}))
+        elif subscription_type == "trades":
+            ws.send(json.dumps({"sub": "market." + sym + ".trade.detail", "id": "id1"}))
+        else:
+            raise ValueError(
+                "This subscription_type is not yet supported: " + str(subscription_type) + " for market: " + market)
     else:
         raise ValueError("Market not supported: " + market)
     return ws
@@ -107,6 +116,13 @@ def is_error_WS_result(result):
 def is_event_WS_result(result):
     if type(result) == dict:
         return "event" in result.keys()
+    else:
+        return False
+
+
+def is_ping_WS_result(result):
+    if type(result) == dict:
+        return "ping" in result.keys()
     else:
         return False
 

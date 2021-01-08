@@ -25,5 +25,7 @@ def get_sym_format(sym, market):
         return sym
     elif market == "BITFINEX":
         return sym.replace("XBT", "BTC")
+    elif market == "HUOBI":
+        return sym.replace("XBT", "BTC").lower()
     else:
         return sym

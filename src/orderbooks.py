@@ -163,6 +163,10 @@ def get_data_from_orderbook_result(result, market):
                     data["b"].append([change[1], change[2]])
                 if change[0] == "sell":
                     data["a"].append([change[1], change[2]])
+    elif market == "HUOBI":
+        data = {"bids": result["tick"]["bids"], "asks": result["tick"]["asks"],
+                "marketTimestamp": datetime.datetime.fromtimestamp(float(result["ts"]) / 1e3).strftime(
+                    "%Y.%m.%dD%H:%M:%S.%f")}
     return data
 
 
