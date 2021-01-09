@@ -11,7 +11,7 @@ import pandas as pd
 
 def get_traded_pairs(market):
     ws_tickers = []
-    if market == "KRAKEN" or market == "KRAKEN1":
+    if market == "KRAKEN":
         api_request = urllib.request.Request("https://api.kraken.com/0/public/AssetPairs")
         result = json.loads(urllib.request.urlopen(api_request).read())
         if result["error"] != []:
@@ -21,6 +21,10 @@ def get_traded_pairs(market):
             for ticker in result.keys():
                 if "wsname" in result[ticker].keys():
                     ws_tickers.append(result[ticker]["wsname"])
+        api_request = urllib.request.Request("https://futures.kraken.com/derivatives/api/v3/tickers")
+        result = json.loads(urllib.request.urlopen(api_request).read())
+        for ticker in result["tickers"]:
+            ws_tickers.append(ticker["symbol"])
     return ws_tickers
 
 

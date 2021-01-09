@@ -7,6 +7,6 @@
 
 import sys
 
-from persistence import create_ws_subscription_kdb_persister
+from market_data.src.persistence import create_ws_subscription_kdb_persister
 
 create_ws_subscription_kdb_persister(subscription_type=sys.argv[1], sym=sys.argv[2], market=sys.argv[3])

@@ -3,7 +3,7 @@
 @author: Arthurim
 @Description: various functions to convert to kdb
 """
-from kdb_utils_format import convert_sym_to_kdb_format
+from market_data.src.utils.kdb_utils_format import convert_sym_to_kdb_format
 
 
 def convert_trades_series_to_kdb_row(row):

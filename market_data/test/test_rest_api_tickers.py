@@ -5,14 +5,14 @@
 """
 import unittest
 
-from rest_api_traded_pairs import persist_traded_pairs
+from market_data.src.rest_api_traded_pairs import persist_traded_pairs
 
 DEBUG_TIME = 1
 
 
 class TestShouldGetAllTradedTickersFromRESTAPI(unittest.TestCase):
 
-    def test_persistence_trades_kraken_xbtusd_future(self):
+    def test_persistence_tickers(self):
         tickers = persist_traded_pairs(["KRAKEN"])
         self.assertTrue(len(tickers) > 0)
 

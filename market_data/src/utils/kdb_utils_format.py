@@ -3,7 +3,7 @@
 @author: Arthurim
 @Description: Functions utils relating to kdb
 """
-from sym_handler import is_spot
+from market_data.src.utils.sym_handler import is_spot
 
 
 def convert_sym_to_kdb_format(sym):

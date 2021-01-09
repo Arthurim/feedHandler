@@ -9,13 +9,13 @@ import json
 import logging
 import time
 
-from constants.markets import is_supported_market
-from ohlcs import persist_ohlc_to_kdb
-from orderbooks import persist_orderbook_to_kdb
-from spreads import persist_spread_to_kdb
-from trades import persist_trades_to_kdb
-from utils.persistence_utils import get_args_for_subscription
-from utils.websocket_message_handler import create_ws_subscription_logger, create_wss_connection, \
+from market_data.src.constants.markets import is_supported_market
+from market_data.src.ohlcs import persist_ohlc_to_kdb
+from market_data.src.orderbooks import persist_orderbook_to_kdb
+from market_data.src.spreads import persist_spread_to_kdb
+from market_data.src.trades import persist_trades_to_kdb
+from market_data.src.utils.persistence_utils import get_args_for_subscription
+from market_data.src.utils.websocket_message_handler import create_ws_subscription_logger, create_wss_connection, \
     is_event_WS_result, is_info_WS_result, is_ping_WS_result, is_not_huobi_tick_result, \
     is_correct_subscription_message_bitmex
 

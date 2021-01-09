@@ -6,7 +6,7 @@
 import os
 import unittest
 
-from persistence import create_ws_subscription_kdb_persister_debug
+from market_data.src.persistence import create_ws_subscription_kdb_persister_debug
 
 DEBUG_TIME = 1
 

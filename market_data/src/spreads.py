@@ -8,9 +8,9 @@ import logging
 
 import pandas as pd
 
-from constants.kdb_hosts import MARKET_DATA_KDB_HOST, MARKET_DATA_TP
-from utils.persistence_utils import persist_row_to_table
-from utils.python_to_kdb_conversion import convert_spread_to_kdb_row
+from market_data.src.constants.kdb_hosts import MARKET_DATA_KDB_HOST, MARKET_DATA_TP
+from market_data.src.utils.persistence_utils import persist_row_to_table
+from market_data.src.utils.python_to_kdb_conversion import convert_spread_to_kdb_row
 
 
 def persist_spread_to_kdb(result):
