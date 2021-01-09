@@ -130,34 +130,40 @@ def get_data_from_orderbook_result(result, market):
     :return: dictionary, orderbook
     """
     if market == "KRAKEN":
-        sym = result["product_id"]
-        if is_spot(sym):
-            if "bs" in result[1]:
-                data = {"bids": result[1]["bs"], "asks": result[1]["as"],
-                        "marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
-            elif "b" in result[1]:
-                data = {"b": result[1]["b"], "marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
-            elif "a" in result[1]:
-                data = {"a": result[1]["a"], "marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
-        elif is_future(sym):
-            if "bids" in result.keys():
-                data = {"bids": process_kraken_future_orderbook_side(result["bids"]),
-                        "asks": process_kraken_future_orderbook_side(result["asks"]),
-                        "marketTimestamp": datetime.datetime.fromtimestamp(float(result["timestamp"]) / 1e3).strftime(
-                            "%Y.%m.%dD%H:%M:%S.%f")}
-            elif "side" in result.keys():
-                if result["side"] == "buy":
-                    data = {"bids": [[result["price"], result["qty"]]],
-                            "asks": [],
+        if type(result) == list:
+            if is_spot(result[3]):
+                if "bs" in result[1]:
+                    data = {"bids": result[1]["bs"], "asks": result[1]["as"],
+                            "marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
+                elif "b" in result[1]:
+                    data = {"b": result[1]["b"], "marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
+                elif "a" in result[1]:
+                    data = {"a": result[1]["a"], "marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
+            else:
+                raise ValueError("API result should be a list only for spot for KRAKEN.")
+        elif type(result) == dict:
+            if is_future(result["product_id"]):
+                if "bids" in result.keys():
+                    data = {"bids": process_kraken_future_orderbook_side(result["bids"]),
+                            "asks": process_kraken_future_orderbook_side(result["asks"]),
                             "marketTimestamp": datetime.datetime.fromtimestamp(
                                 float(result["timestamp"]) / 1e3).strftime(
                                 "%Y.%m.%dD%H:%M:%S.%f")}
-                elif result["side"] == "sell":
-                    data = {"bids": [],
-                            "asks": [[result["price"], result["qty"]]],
-                            "marketTimestamp": datetime.datetime.fromtimestamp(
-                                float(result["timestamp"]) / 1e3).strftime(
-                                "%Y.%m.%dD%H:%M:%S.%f")}
+                elif "side" in result.keys():
+                    if result["side"] == "buy":
+                        data = {"bids": [[result["price"], result["qty"]]],
+                                "asks": [],
+                                "marketTimestamp": datetime.datetime.fromtimestamp(
+                                    float(result["timestamp"]) / 1e3).strftime(
+                                    "%Y.%m.%dD%H:%M:%S.%f")}
+                    elif result["side"] == "sell":
+                        data = {"bids": [],
+                                "asks": [[result["price"], result["qty"]]],
+                                "marketTimestamp": datetime.datetime.fromtimestamp(
+                                    float(result["timestamp"]) / 1e3).strftime(
+                                    "%Y.%m.%dD%H:%M:%S.%f")}
+            else:
+                raise ValueError("API result should be a dictionary only for future for KRAKEN.")
     elif market == "BINANCE":
         result["marketTimestamp"] = datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f")
         data = result

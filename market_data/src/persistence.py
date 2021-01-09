@@ -16,7 +16,8 @@ from spreads import persist_spread_to_kdb
 from trades import persist_trades_to_kdb
 from utils.persistence_utils import get_args_for_subscription
 from utils.websocket_message_handler import create_ws_subscription_logger, create_wss_connection, \
-    is_event_WS_result, is_info_WS_result, is_ping_WS_result
+    is_event_WS_result, is_info_WS_result, is_ping_WS_result, is_not_huobi_tick_result, \
+    is_correct_subscription_message_bitmex
 
 
 def persist_subscription_result_to_kdb(result, subscription_type, arg=""):
@@ -132,7 +133,9 @@ def create_ws_subscription_kdb_persister_debug(subscription_type, sym, market, d
                 result = json.loads(result)
             app_log.info(
                 'WS ' + subscription_type + ' subcscription for ' + sym + " on " + market + " - Received  '%s'" % result)
-            if not (is_event_WS_result(result) or is_info_WS_result(result) or is_ping_WS_result(result)):
+            if not (is_event_WS_result(result) or is_info_WS_result(result) or is_ping_WS_result(
+                    result) or is_not_huobi_tick_result(result, market) or is_correct_subscription_message_bitmex(
+                result, market)):
                 arg = persist_subscription_result_to_kdb(result, subscription_type, arg)
         except Exception as error:
             app_log.error(

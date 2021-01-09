@@ -15,7 +15,6 @@ DEBUG_TIME = 1
 class TestShouldPersistAllMarketsOrderbooksForXBTUSDWithoutError(unittest.TestCase):
 
     def test_persistence_orderbooks_kraken_xbtusd(self):
-        # 2021-01-08 23:12:52,046 - ERROR - create_ws_subscription_kdb_persister_debug - (140) - WS orderbooks subcscription for XBTUSD on KRAKEN - Caught this error: TypeError('list indices must be integers or slices, not str')
         log_file = create_ws_subscription_kdb_persister_debug(subscription_type="orderbooks",
                                                               sym="XBTUSD",
                                                               market="KRAKEN",
@@ -23,10 +22,9 @@ class TestShouldPersistAllMarketsOrderbooksForXBTUSDWithoutError(unittest.TestCa
         f = open(os.path.join(log_file), "r")
         self.assertTrue(" - ERROR - " not in f.read(), "Persistence failed, look at log:" + log_file)
 
-    def test_persistence_orderbooks_binance_xbtusd(self):
-        # hangs forever
+    def test_persistence_orderbooks_binance_xbtusdt(self):
         log_file = create_ws_subscription_kdb_persister_debug(subscription_type="orderbooks",
-                                                              sym="XBTUSD",
+                                                              sym="XBTUSDT",
                                                               market="BINANCE",
                                                               debug_time=DEBUG_TIME)
         f = open(os.path.join(log_file), "r")
@@ -42,7 +40,6 @@ class TestShouldPersistAllMarketsOrderbooksForXBTUSDWithoutError(unittest.TestCa
         self.assertTrue(" - ERROR - " not in f.read(), "Persistence failed, look at log:" + log_file)
 
     def test_persistence_orderbooks_bitmex_xbtusd(self):
-        # 2021-01-08 23:07:11,084 - ERROR - create_ws_subscription_kdb_persister_debug - (140) - WS orderbooks subcscription for XBTUSD on BITMEX - Caught this error: KeyError('data')
         log_file = create_ws_subscription_kdb_persister_debug(subscription_type="orderbooks",
                                                               sym="XBTUSD",
                                                               market="BITMEX",
@@ -58,10 +55,9 @@ class TestShouldPersistAllMarketsOrderbooksForXBTUSDWithoutError(unittest.TestCa
         f = open(os.path.join(log_file), "r")
         self.assertTrue(" - ERROR - " not in f.read(), "Persistence failed, look at log:" + log_file)
 
-    def test_persistence_orderbooks_huobi_xbtusd(self):
-        # 2021-01-08 23:10:22,412 - ERROR - create_ws_subscription_kdb_persister_debug - (140) - WS orderbooks subcscription for XBTUSD on HUOBI - Caught this error: KeyError('tick')
+    def test_persistence_orderbooks_huobi_xbtusdt(self):
         log_file = create_ws_subscription_kdb_persister_debug(subscription_type="orderbooks",
-                                                              sym="XBTUSD",
+                                                              sym="XBTUSDT",
                                                               market="HUOBI",
                                                               debug_time=DEBUG_TIME)
         f = open(os.path.join(log_file), "r")

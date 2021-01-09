@@ -147,3 +147,17 @@ def is_info_WS_result(result):
         if "type" in result.keys():
             return result["type"] == "subscriptions"
     return False
+
+
+def is_not_huobi_tick_result(result, market):
+    if market == "HUOBI":
+        return "tick" not in result.keys()
+    else:
+        return False
+
+
+def is_correct_subscription_message_bitmex(result, market):
+    if market == "BITMEX":
+        if "success" in result.keys():
+            return result["success"]
+    return False
