@@ -250,10 +250,10 @@ def get_orderbook(api_book):
                      "quoteId": str(uuid4()).replace("-", ""),
                      "sym": api_book["sym"],
                      "market": api_book["market"],
-                     "bidPrices": bid_prices,
-                     "bidSizes": bid_sizes,
-                     "offerPrices": offer_prices,
-                     "offerSizes": offer_sizes})
+                     "bidPrices": bid_prices[:10],
+                     "bidSizes": bid_sizes[:10],
+                     "offerPrices": offer_prices[:10],
+                     "offerSizes": offer_sizes[:10]})
     return row
 
 
