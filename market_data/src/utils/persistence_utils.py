@@ -9,7 +9,7 @@ import logging
 
 from qpython import qconnection
 
-from websocket_message_handler import is_ping_WS_result
+from .websocket_message_handler import is_ping_WS_result
 
 
 def get_market_from_row(row):
@@ -104,11 +104,14 @@ def handle_ws_errors(ws, result):
     :return:
     """
     error = ""
-    if "error" in result.keys():
-        error = result["error"]
-    elif "errors" in result.keys():
-        error = result["errors"]
+    app_log = logging.getLogger('root')
+    if type(result) == dict:
+        if "error" in result.keys():
+            error = result["error"]
+        elif "errors" in result.keys():
+            error = result["errors"]
     if error != "":
+        app_log.error("Closing WS connection to ", ws.url, "Received the following error:", error)
         ws.close()
         raise ConnectionError("WS received the following error:", error)
     else:

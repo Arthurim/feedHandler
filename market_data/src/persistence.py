@@ -83,6 +83,7 @@ def create_ws_subscription_kdb_persister(subscription_type, sym, market):
                 'WS ' + subscription_type + ' subcscription for ' + sym + " on " + market + ' - create_ws_subscription_orderbook - Caught this error: ' + repr(
                     error))
             time.sleep(3)
+    ws.close()
 
 
 def create_ws_subscription_kdb_persister_debug(subscription_type, sym, market, debug_time=1):
@@ -130,4 +131,5 @@ def create_ws_subscription_kdb_persister_debug(subscription_type, sym, market, d
                 'WS ' + subscription_type + ' subcscription for ' + sym + " on " + market + ' - Caught this error: ' + repr(
                     error))
             time.sleep(3)
+    ws.close()
     return app_log.handlers[0].baseFilename
