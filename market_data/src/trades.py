@@ -13,6 +13,15 @@ from market_data.src.utils.persistence_utils import persist_row_to_table
 from market_data.src.utils.python_to_kdb_conversion import convert_trades_series_to_kdb_row
 
 
+def hormonise_side(s):
+    if s in ["sell", "s", "ask", "offer"]:
+        return "s"
+    elif s in ["buy", "bid", "b"]:
+        return "b"
+    else:
+        raise ValueError("Unknown side for trade:", str(s))
+
+
 def get_data_from_trades_result(result, market):
     rows = []
     if market == "KRAKEN":
@@ -24,7 +33,7 @@ def get_data_from_trades_result(result, market):
                                  "%Y.%m.%dD%H:%M:%S.%f"),
                              "market": market,
                              "tradeId": "",
-                             "side": str(trade[3]),
+                             "side": hormonise_side(str(trade[3])),
                              "price": float(trade[0]),
                              "lhsFlow": float(trade[1]),
                              "rhsFlow": float(trade[0]) * float(trade[1]),
