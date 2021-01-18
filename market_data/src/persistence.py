@@ -4,8 +4,6 @@
 @Description: functions to handle the persistence of market data from WS APIs to Kdb
 """
 import datetime
-import gzip
-import json
 import logging
 import time
 
@@ -14,7 +12,7 @@ from market_data.src.ohlcs import persist_ohlc_to_kdb
 from market_data.src.orderbooks import persist_orderbook_to_kdb
 from market_data.src.spreads import persist_spread_to_kdb
 from market_data.src.trades import persist_trades_to_kdb
-from market_data.src.utils.persistence_utils import get_args_for_subscription
+from market_data.src.utils.persistence_utils import get_args_for_subscription, get_ws_result
 from market_data.src.utils.websocket_message_handler import create_ws_subscription_logger, create_wss_connection, \
     is_event_WS_result, is_info_WS_result, is_ping_WS_result, is_not_huobi_tick_result, \
     is_correct_subscription_message_bitmex
@@ -75,9 +73,7 @@ def create_ws_subscription_kdb_persister(subscription_type, sym, market):
 
     while True:
         try:
-            result = ws.recv()
-            # TODO handle heartbeats
-            result = json.loads(result)
+            result = get_ws_result(ws, market)
             app_log.info(
                 'WS ' + subscription_type + ' subcscription for ' + sym + " on " + market + " - Received  '%s'" % result)
             if not (is_event_WS_result(result) or is_info_WS_result(result)):
@@ -122,15 +118,7 @@ def create_ws_subscription_kdb_persister_debug(subscription_type, sym, market, d
 
     while datetime.datetime.now() < end_time:
         try:
-            if market == 'HUOBI':
-                result = gzip.decompress(ws.recv()).decode("utf-8")
-                result = json.loads(result)
-                if is_ping_WS_result(result):
-                    ws.send(json.dumps({"pong": result["ping"]}))
-            else:
-                result = ws.recv()
-                # TODO handle coonection messages, heartbeats and disconnections
-                result = json.loads(result)
+            result = get_ws_result(ws, market)
             app_log.info(
                 'WS ' + subscription_type + ' subcscription for ' + sym + " on " + market + " - Received  '%s'" % result)
             if not (is_event_WS_result(result) or is_info_WS_result(result) or is_ping_WS_result(
