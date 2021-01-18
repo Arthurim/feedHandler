@@ -61,6 +61,9 @@ def create_wss_connection(subscription_type, market, sym):
         if subscription_type == "orderbooks":
             ws.send(json.dumps(
                 {"event": "subscribe", "channel": "book", "prec": "P0", "length": "10", "symbol": "t" + sym}))
+        elif subscription_type == "trades":
+            ws.send(json.dumps(
+                {"event": "subscribe", "channel": "trades", "symbol": "t" + sym}))
         else:
             raise ValueError(
                 "This subscription_type is not yet supported: " + str(subscription_type) + " for market: " + market)

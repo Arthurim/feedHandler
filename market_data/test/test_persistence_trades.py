@@ -53,13 +53,13 @@ class TestShouldPersistAllMarketsTradesForXBTUSDWithoutError(unittest.TestCase):
         f = open(os.path.join(log_file), "r")
         self.assertTrue(" - ERROR - " not in f.read(), "Persistence failed, look at log:" + log_file)
 
-    # def test_persistence_trades_bitfinex_xbtusd(self):
-    #     log_file = create_ws_subscription_kdb_persister_debug(subscription_type="trades",
-    #                                                           sym="XBTUSD",
-    #                                                           market="BITFINEX",
-    #                                                           debug_time=DEBUG_TIME)
-    #     f = open(os.path.join(log_file), "r")
-    #     self.assertTrue(" - ERROR - " not in f.read(), "Persistence failed, look at log:" + log_file)
+    def test_persistence_trades_bitfinex_xbtusd(self):
+        log_file = create_ws_subscription_kdb_persister_debug(subscription_type="trades",
+                                                              sym="XBTUSD",
+                                                              market="BITFINEX",
+                                                              debug_time=DEBUG_TIME)
+        f = open(os.path.join(log_file), "r")
+        self.assertTrue(" - ERROR - " not in f.read(), "Persistence failed, look at log:" + log_file)
 
     def test_persistence_trades_huobi_xbtusd(self):
         log_file = create_ws_subscription_kdb_persister_debug(subscription_type="trades",
