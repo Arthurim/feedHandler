@@ -92,6 +92,27 @@ def get_data_from_trades_result(result, market):
                          "misc": ""
                          })
         rows.append(row)
+    elif market == "HUOBI":
+        sym = result["ch"].split("market.")[1].split(".trade")[0].upper()
+        trades = result["tick"]["data"]
+        for result in trades:
+            row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
+                             "sym": sym,
+                             "gatewayTimestamp": datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f"),
+                             "tradeTimestamp": datetime.datetime.fromtimestamp(float(result["ts"]) / 1e3).strftime(
+                                 "%Y.%m.%dD%H:%M:%S.%f"),
+                             "market": market,
+                             "tradeId": result["tradeId"],
+                             "side": result["direction"],
+                             "price": float(result["price"]),
+                             "lhsFlow": float(result["amount"]),
+                             "rhsFlow": float(result["price"]) * float(result["amount"]),
+                             "orderType": "",
+                             "misc": ""
+                             })
+            rows.append(row)
+    else:
+        raise ValueError("Trades subscription for market:" + market + " not supported.")
     return rows
 
 

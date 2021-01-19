@@ -7,6 +7,9 @@
 """
 
 
+def from_huobi_sym(sym):
+    return sym.upper()
+
 def get_sym_format(sym, market):
     """
     Formats the sym to adapt to ECN format, eg XBTUSD will be XBT/USD for Kraken
