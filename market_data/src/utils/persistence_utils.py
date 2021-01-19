@@ -64,7 +64,7 @@ def get_args_for_subscription(subscription_type, sym, market):
     if subscription_type == "orderbooks":
         arg = {"sym": sym, "market": market, "marketTimestamp": {}, "bid": {}, "ask": {}}
     elif subscription_type == "trades":
-        arg = market
+        arg = {"market": market, "sym": sym}
     elif subscription_type == "ohlcs":
         arg = ""
     elif subscription_type == "spreads":

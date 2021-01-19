@@ -22,7 +22,7 @@ def hormonise_side(s):
         raise ValueError("Unknown side for trade:", str(s))
 
 
-def get_data_from_trades_result(result, market):
+def get_data_from_trades_result(result, sym, market):
     rows = []
     if market == "KRAKEN":
         for trade in result[1]:
@@ -75,6 +75,23 @@ def get_data_from_trades_result(result, market):
                              "misc": ""
                              })
             rows.append(row)
+    elif market == "BITFINEX":
+        for trade in result[1]:
+            row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
+                             "sym": sym,
+                             "gatewayTimestamp": datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f"),
+                             "tradeTimestamp": datetime.datetime.fromtimestamp(trade[1] / 1e3).strftime(
+                                 "%Y.%m.%dD%H:%M:%S.%f"),
+                             "market": market,
+                             "tradeId": trade[0],
+                             "side": get_side_from_lhsFlow(trade[3]),
+                             "price": float(trade[2]),
+                             "lhsFlow": float(trade[3]),
+                             "rhsFlow": float(trade[2]) * float(trade[3]),
+                             "orderType": "",
+                             "misc": ""
+                             })
+            rows.append(row)
     elif market == "COINBASE":
         row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
                          "sym": result["product_id"],
@@ -116,17 +133,24 @@ def get_data_from_trades_result(result, market):
     return rows
 
 
-def persist_trades_to_kdb(result, market):
+def persist_trades_to_kdb(result, sym_market):
     """
     Persists the trades result of the Webscoket API to Kdb
 
-    :param market: string
+    :param sym_market: dict, 2 keys: sym and market
     :param result: a dictionary containing the trades result from API call
     :return:
     """
     app_log = logging.getLogger('root')
     # app_log.info("Persisting #" + str(len(result[1])) + " trades to kdb")
-    new_rows = get_data_from_trades_result(result, market)
+    new_rows = get_data_from_trades_result(result, sym_market["sym"], sym_market["market"])
     for new_row in new_rows:
         kdb_row = convert_trades_series_to_kdb_row(new_row)
         persist_row_to_table(kdb_row, "trades", MARKET_DATA_KDB_HOST, MARKET_DATA_TP)
+
+
+def get_side_from_lhsFlow(lhsFlow):
+    if lhsFlow > 0:
+        return "buy"
+    else:
+        return "sell"
