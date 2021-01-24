@@ -46,6 +46,7 @@ def persist_row_to_table(row, table, host, port):
         # TODO check that the timingId is not already persisted to kdb
         try:
             X = q('.u.upd[`' + table + ';(' + row + ')]')
+            app_log.info(host + ":" + str(port) + " - Persisted [" + row + "] to table " + table)
         except Exception as error:
             app_log.error("Persisting " + table + " table for " + get_sym_from_row(row) + " on " + get_market_from_row(
                 row) + ' - Caught this error: ' + repr(error))

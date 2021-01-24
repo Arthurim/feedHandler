@@ -4,14 +4,13 @@
 @Description: functions to handle the creation of a trade table from the ECNs APIs and to persist it to kdb
 """
 import datetime
-import logging
 
 import pandas as pd
 
 from market_data.src.constants.kdb_hosts import MARKET_DATA_KDB_HOST, MARKET_DATA_TP
 from market_data.src.utils.persistence_utils import persist_row_to_table
 from market_data.src.utils.python_to_kdb_conversion import convert_trades_series_to_kdb_row
-from market_data.src.utils.sym_handler import is_spot, is_future
+from market_data.src.utils.sym_handler import is_spot_market_ticker, is_future_market_ticker
 
 
 def hormonise_side(s):
@@ -26,10 +25,10 @@ def hormonise_side(s):
 def get_data_from_trades_result(result, sym, market):
     rows = []
     if market == "KRAKEN":
-        if is_spot(sym):
+        if is_spot_market_ticker(sym):
             for trade in result[1]:
                 row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
-                                 "sym": result[3],
+                                 "sym": sym,
                                  "gatewayTimestamp": datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f"),
                                  "tradeTimestamp": datetime.datetime.fromtimestamp(float(trade[2])).strftime(
                                      "%Y.%m.%dD%H:%M:%S.%f"),
@@ -43,10 +42,10 @@ def get_data_from_trades_result(result, sym, market):
                                  "misc": str('""' if trade[5] == '' else trade[5])
                                  })
                 rows.append(row)
-        elif is_future(sym):
+        elif is_future_market_ticker(sym):
             for trade in result["trades"]:
                 row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
-                                 "sym": trade["product_id"],
+                                 "sym": sym,
                                  "gatewayTimestamp": datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f"),
                                  "tradeTimestamp": datetime.datetime.fromtimestamp(float(trade["time"]) / 1e3).strftime(
                                      "%Y.%m.%dD%H:%M:%S.%f"),
@@ -62,7 +61,7 @@ def get_data_from_trades_result(result, sym, market):
                 rows.append(row)
     elif market == "BINANCE":
         row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
-                         "sym": result["s"],
+                         "sym": sym,
                          "gatewayTimestamp": datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f"),
                          "tradeTimestamp": datetime.datetime.fromtimestamp(float(result["T"]) / 1e3).strftime(
                              "%Y.%m.%dD%H:%M:%S.%f"),
@@ -77,23 +76,24 @@ def get_data_from_trades_result(result, sym, market):
                          })
         rows.append(row)
     elif market == "BITMEX":
-        for trade in result["data"]:
-            row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
-                             "sym": trade["symbol"],
-                             "gatewayTimestamp": datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f"),
-                             "tradeTimestamp": datetime.datetime.strptime(trade["timestamp"],
-                                                                          '%Y-%m-%dT%H:%M:%S.%fZ').strftime(
-                                 "%Y.%m.%dD%H:%M:%S.%f"),
-                             "market": market,
-                             "tradeId": str(trade["trdMatchID"]),
-                             "side": str(trade["side"]),
-                             "price": float(trade["price"]),
-                             "lhsFlow": float(trade["size"]),
-                             "rhsFlow": float(trade["size"]) * float(trade["price"]),
-                             "orderType": "",
-                             "misc": ""
-                             })
-            rows.append(row)
+        if len(result["data"]) > 0:
+            for trade in result["data"]:
+                row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
+                                 "sym": sym,
+                                 "gatewayTimestamp": datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f"),
+                                 "tradeTimestamp": datetime.datetime.strptime(trade["timestamp"],
+                                                                              '%Y-%m-%dT%H:%M:%S.%fZ').strftime(
+                                     "%Y.%m.%dD%H:%M:%S.%f"),
+                                 "market": market,
+                                 "tradeId": str(trade["trdMatchID"]),
+                                 "side": str(trade["side"]),
+                                 "price": float(trade["price"]),
+                                 "lhsFlow": float(trade["size"]),
+                                 "rhsFlow": float(trade["size"]) * float(trade["price"]),
+                                 "orderType": "",
+                                 "misc": ""
+                                 })
+                rows.append(row)
     elif market == "BITFINEX":
         for trade in result[1]:
             row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
@@ -113,7 +113,7 @@ def get_data_from_trades_result(result, sym, market):
             rows.append(row)
     elif market == "COINBASE":
         row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
-                         "sym": result["product_id"],
+                         "sym": sym,
                          "gatewayTimestamp": datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f"),
                          "tradeTimestamp": datetime.datetime.strptime(result["time"],
                                                                       '%Y-%m-%dT%H:%M:%S.%fZ').strftime(
@@ -160,8 +160,6 @@ def persist_trades_to_kdb(result, sym_market):
     :param result: a dictionary containing the trades result from API call
     :return:
     """
-    app_log = logging.getLogger('root')
-    # app_log.info("Persisting #" + str(len(result[1])) + " trades to kdb")
     new_rows = get_data_from_trades_result(result, sym_market["sym"], sym_market["market"])
     for new_row in new_rows:
         kdb_row = convert_trades_series_to_kdb_row(new_row)

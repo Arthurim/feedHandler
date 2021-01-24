@@ -3,19 +3,22 @@
 @author: Arthurim
 @Description: Functions utils relating to kdb
 """
-from market_data.src.utils.sym_handler import is_spot
+from market_data.src.utils.sym_handler import is_spot, is_future
 
 
-def convert_sym_to_kdb_format(sym):
+def convert_sym_to_kdb_format(sym, market):
     """
     Formats the sym from the API to the sym format we have in kdb
     :param sym:
     :return:
     """
+    market = ""
     if is_spot(sym):
         return sym.replace("-", "").replace("/", "").replace("BTC", "XBT")
-    else:
+    elif is_future(sym):
         return sym.replace("-", "").replace("_", "/").replace("BTC", "XBT")
+    else:
+        raise ValueError("Instrument type not supported: ", sym)
 
 
 def has_kdb_format_time(d_time):

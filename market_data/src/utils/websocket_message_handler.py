@@ -10,7 +10,7 @@ from logging.handlers import RotatingFileHandler
 
 from websocket import create_connection
 
-from market_data.src.utils.sym_handler import get_sym_format, is_spot, is_future
+from market_data.src.utils.sym_handler import format_sym_for_market, is_spot_market_ticker, is_future_market_ticker
 
 
 def create_wss_connection(subscription_type, market, sym):
@@ -22,9 +22,9 @@ def create_wss_connection(subscription_type, market, sym):
     :param sym: str
     :return: websocket
     """
-    sym = get_sym_format(sym, market)
+    sym = format_sym_for_market(sym, market)
     if market == "KRAKEN":
-        if is_spot(sym):
+        if is_spot_market_ticker(sym):
             ws = create_connection("wss://ws.kraken.com")
             if subscription_type == "orderbooks":
                 ws.send(
@@ -39,7 +39,7 @@ def create_wss_connection(subscription_type, market, sym):
             else:
                 raise ValueError(
                     "This subscription_type is not yet supported: " + str(subscription_type) + " for market: " + market)
-        elif is_future(sym):
+        elif is_future_market_ticker(sym):
             ws = create_connection("wss://futures.kraken.com/ws/v1")
             if subscription_type == "orderbooks":
                 ws.send(json.dumps({"event": "subscribe", "product_ids": [sym], "feed": "book"}))

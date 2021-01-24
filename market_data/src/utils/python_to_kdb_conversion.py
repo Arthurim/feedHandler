@@ -3,7 +3,6 @@
 @author: Arthurim
 @Description: various functions to convert to kdb
 """
-from market_data.src.utils.kdb_utils_format import convert_sym_to_kdb_format
 
 
 def convert_trades_series_to_kdb_row(row):
@@ -11,11 +10,12 @@ def convert_trades_series_to_kdb_row(row):
     :param row: pd.series, obtained from persist_trades_to_kdb
     :return: str, kdb row ready to be inserted
     """
+    market = row["market"]
     return ".z.N;" + \
-           "`$\"" + convert_sym_to_kdb_format(row["sym"]) + "\";" + \
+           "`$\"" + row["sym"] + "\";" + \
            ".z.p;" + \
            "`timestamp$" + row["tradeTimestamp"] + ";" + \
-           "`" + row["market"] + ";" + \
+           "`" + market + ";" + \
            "`$\"" + str(row["tradeId"]) + "\";" + \
            "`" + row["side"] + ";" + \
            str(row["price"]) + ";" + \
@@ -31,7 +31,7 @@ def convert_orderbook_series_to_kdb_row(row):
     :return: str, kdb row ready to be inserted
     """
     return ".z.N;" + \
-           "`$\"" + convert_sym_to_kdb_format(row["sym"]) + "\";" + \
+           "`$\"" + row["sym"] + "\";" + \
            ".z.p;" + \
            "`timestamp$" + row["marketTimestamp"] + ";" + \
            "`$\"" + row["quoteId"] + "\";" + \
@@ -48,7 +48,7 @@ def convert_spread_to_kdb_row(row):
     :return: str, kdb row ready to be inserted
     """
     return ".z.N;" + \
-           "`$\"" + convert_sym_to_kdb_format(row["sym"]) + "\";" + \
+           "`$\"" + row["sym"] + "\";" + \
            ".z.p;" + \
            "`timestamp$" + row["marketTimestamp"] + ";" + \
            "`" + row["market"] + ";" + \
@@ -64,7 +64,7 @@ def convert_ohlc_series_to_kdb_row(row):
     :return: str, kdb row ready to be inserted
     """
     return ".z.N;" + \
-           "`$\"" + convert_sym_to_kdb_format(row["sym"]) + "\";" + \
+           "`$\"" + row["sym"] + "\";" + \
            ".z.p;" + \
            "`timestamp$" + row["marketTimestamp"] + ";" + \
            "`" + row["market"] + ";" + \

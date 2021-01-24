@@ -12,7 +12,7 @@ import pandas as pd
 from market_data.src.constants.kdb_hosts import MARKET_DATA_KDB_HOST, MARKET_DATA_TP
 from market_data.src.utils.kdb_utils_format import has_kdb_format_timestamp, convert_sym_to_kdb_format
 from market_data.src.utils.persistence_utils import persist_row_to_table
-from market_data.src.utils.sym_handler import is_spot, is_future
+from market_data.src.utils.sym_handler import is_spot_market_ticker, is_future_market_ticker
 
 
 def dicttofloat(keyvalue):
@@ -131,7 +131,7 @@ def get_data_from_orderbook_result(result, market):
     """
     if market == "KRAKEN":
         if type(result) == list:
-            if is_spot(result[3]):
+            if is_spot_market_ticker(result[3], market):
                 if "bs" in result[1]:
                     data = {"bids": result[1]["bs"], "asks": result[1]["as"],
                             "marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
@@ -142,7 +142,7 @@ def get_data_from_orderbook_result(result, market):
             else:
                 raise ValueError("API result should be a list only for spot for KRAKEN.")
         elif type(result) == dict:
-            if is_future(result["product_id"]):
+            if is_future_market_ticker(result["product_id"]):
                 if "bids" in result.keys():
                     data = {"bids": process_kraken_future_orderbook_side(result["bids"]),
                             "asks": process_kraken_future_orderbook_side(result["asks"]),
