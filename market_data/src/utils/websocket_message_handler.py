@@ -43,6 +43,8 @@ def create_wss_connection(subscription_type, market, sym):
             ws = create_connection("wss://futures.kraken.com/ws/v1")
             if subscription_type == "orderbooks":
                 ws.send(json.dumps({"event": "subscribe", "product_ids": [sym], "feed": "book"}))
+            if subscription_type == "trades":
+                ws.send(json.dumps({"event": "subscribe", "product_ids": [sym], "feed": "trade"}))
             else:
                 raise ValueError(
                     "This subscription_type is not yet supported: " + str(subscription_type) + " for market: " + market)
