@@ -10,7 +10,7 @@ import pandas as pd
 from market_data.src.constants.kdb_hosts import MARKET_DATA_KDB_HOST, MARKET_DATA_TP
 from market_data.src.utils.persistence_utils import persist_row_to_table
 from market_data.src.utils.python_to_kdb_conversion import convert_trades_series_to_kdb_row
-from market_data.src.utils.sym_handler import is_spot_market_ticker, is_future_market_ticker
+from market_data.src.utils.sym_handler import is_spot, is_future
 
 
 def hormonise_side(s):
@@ -25,7 +25,7 @@ def hormonise_side(s):
 def get_data_from_trades_result(result, sym, market):
     rows = []
     if market == "KRAKEN":
-        if is_spot_market_ticker(sym):
+        if is_spot(sym):
             for trade in result[1]:
                 row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
                                  "sym": sym,
@@ -42,23 +42,25 @@ def get_data_from_trades_result(result, sym, market):
                                  "misc": str('""' if trade[5] == '' else trade[5])
                                  })
                 rows.append(row)
-        elif is_future_market_ticker(sym):
-            for trade in result["trades"]:
-                row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
-                                 "sym": sym,
-                                 "gatewayTimestamp": datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f"),
-                                 "tradeTimestamp": datetime.datetime.fromtimestamp(float(trade["time"]) / 1e3).strftime(
-                                     "%Y.%m.%dD%H:%M:%S.%f"),
-                                 "market": market,
-                                 "tradeId": str(trade["uid"]),
-                                 "side": hormonise_side(str(trade["side"])),
-                                 "price": float(trade["price"]),
-                                 "lhsFlow": float(trade["qty"]),
-                                 "rhsFlow": float(trade["price"]) * float(trade["qty"]),
-                                 "orderType": "",
-                                 "misc": str('""' if str(trade["type"]) == '' else str(trade["type"]))
-                                 })
-                rows.append(row)
+        elif is_future(sym):
+            if "trades" in result.keys():
+                for trade in result["trades"]:
+                    row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
+                                     "sym": sym,
+                                     "gatewayTimestamp": datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f"),
+                                     "tradeTimestamp": datetime.datetime.fromtimestamp(
+                                         float(trade["time"]) / 1e3).strftime(
+                                         "%Y.%m.%dD%H:%M:%S.%f"),
+                                     "market": market,
+                                     "tradeId": str(trade["uid"]),
+                                     "side": hormonise_side(str(trade["side"])),
+                                     "price": float(trade["price"]),
+                                     "lhsFlow": float(trade["qty"]),
+                                     "rhsFlow": float(trade["price"]) * float(trade["qty"]),
+                                     "orderType": "",
+                                     "misc": str('""' if str(trade["type"]) == '' else str(trade["type"]))
+                                     })
+                    rows.append(row)
     elif market == "BINANCE":
         row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
                          "sym": sym,
@@ -129,16 +131,21 @@ def get_data_from_trades_result(result, sym, market):
                          })
         rows.append(row)
     elif market == "HUOBI":
-        sym = result["ch"].split("market.")[1].split(".trade")[0].upper()
         trades = result["tick"]["data"]
         for result in trades:
+            if is_spot(sym):
+                trade_id = result["tradeId"]
+            elif is_future(sym):
+                trade_id = result["id"]
+            else:
+                raise ValueError("Instrument not supported:", sym)
             row = pd.Series({"time": datetime.datetime.now().strftime("%H:%M:%S.%f"),
                              "sym": sym,
                              "gatewayTimestamp": datetime.datetime.now().strftime("%Y.%m.%dD%H:%M:%S.%f"),
                              "tradeTimestamp": datetime.datetime.fromtimestamp(float(result["ts"]) / 1e3).strftime(
                                  "%Y.%m.%dD%H:%M:%S.%f"),
                              "market": market,
-                             "tradeId": result["tradeId"],
+                             "tradeId": trade_id,
                              "side": result["direction"],
                              "price": float(result["price"]),
                              "lhsFlow": float(result["amount"]),
@@ -147,6 +154,7 @@ def get_data_from_trades_result(result, sym, market):
                              "misc": ""
                              })
             rows.append(row)
+
     else:
         raise ValueError("Trades subscription for market:" + market + " not supported.")
     return rows

@@ -58,7 +58,13 @@ def format_sym_for_market(sym, market):
         elif market == "BITMEX":
             # XBTUSDF29
             # XBTH21
-            return sym.split("/Future")[0].replace("USD", "") + get_month_code(int(sym[-4:-2])) + sym[-2:]
+            return sym.split("/Future")[0].replace("USD", "") + get_month_code(int(sym[-4:-2])) + sym[-6:-4]
+        elif market == "HUOBI":
+            # BTC201225
+            return sym.replace("XBT", "BTC").replace("USD/Future/", "")
+        elif market == "BINANCE":
+            # BTCUSD_210326
+            return sym.replace("XBT", "BTC").replace("/Future/", "_").lower()
         else:
             return sym
     else:
@@ -177,7 +183,7 @@ def get_instrument_type_from_market_ticker(sym, market):
         return "Spot"
     elif market == "HUOBI":
         # spot: btcusd
-        # future: ?
+        # future: BTC201225
         for i in sym[-6:]:
             if not i.isdigit():
                 return "Spot"

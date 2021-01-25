@@ -24,7 +24,7 @@ def create_wss_connection(subscription_type, market, sym):
     """
     sym = format_sym_for_market(sym, market)
     if market == "KRAKEN":
-        if is_spot_market_ticker(sym):
+        if is_spot_market_ticker(sym, market):
             ws = create_connection("wss://ws.kraken.com")
             if subscription_type == "orderbooks":
                 ws.send(
@@ -39,7 +39,7 @@ def create_wss_connection(subscription_type, market, sym):
             else:
                 raise ValueError(
                     "This subscription_type is not yet supported: " + str(subscription_type) + " for market: " + market)
-        elif is_future_market_ticker(sym):
+        elif is_future_market_ticker(sym, market):
             ws = create_connection("wss://futures.kraken.com/ws/v1")
             if subscription_type == "orderbooks":
                 ws.send(json.dumps({"event": "subscribe", "product_ids": [sym], "feed": "book"}))
@@ -51,10 +51,17 @@ def create_wss_connection(subscription_type, market, sym):
         else:
             raise ValueError("Instrument type not supported for:" + sym)
     elif market == "BINANCE":
+        if is_spot_market_ticker(sym, market):
+            ws_url = "wss://stream.binance.com:9443/ws/"
+        elif is_future_market_ticker(sym, market):
+            ws_url = "wss://dstream.binance.com/ws/"  # +'stream?streams='
+        else:
+            raise ValueError("Instrument not supported:", sym)
+
         if subscription_type == "orderbooks":
-            ws = create_connection("wss://stream.binance.com:9443/ws/" + sym + "@depth10")
+            ws = create_connection(ws_url + sym + "@depth10")
         elif subscription_type == "trades":
-            ws = create_connection("wss://stream.binance.com:9443/ws/" + sym + "@trade")
+            ws = create_connection(ws_url + sym + "@trade")
         else:
             raise ValueError(
                 "This subscription_type is not yet supported: " + str(subscription_type) + " for market: " + market)
@@ -88,7 +95,12 @@ def create_wss_connection(subscription_type, market, sym):
             raise ValueError(
                 "This subscription_type is not yet supported: " + str(subscription_type) + " for market: " + market)
     elif market == "HUOBI":
-        ws = create_connection("wss://api.huobi.pro/ws")
+        if is_spot_market_ticker(sym, market):
+            ws = create_connection("wss://api.huobi.pro/ws")
+        elif is_future_market_ticker(sym, market):
+            ws = create_connection("wss://api.hbdm.com/ws")
+        else:
+            raise ValueError("Instrument not supported:", sym)
         if subscription_type == "orderbooks":
             ws.send(json.dumps({"sub": "market." + sym + ".depth.step0", "id": "id1"}))
         elif subscription_type == "trades":
