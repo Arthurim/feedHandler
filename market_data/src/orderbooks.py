@@ -110,7 +110,7 @@ def convert_orderbook_series_to_kdb_row(row):
     :return: str, the string representation of the orderbook, to insert as a new row in kdb
     """
     return ".z.N;" + \
-           "`$\"" + convert_sym_to_kdb_format(row["sym"]) + "\";" + \
+           "`$\"" + convert_sym_to_kdb_format(row["sym"], row["market"]) + "\";" + \
            ".z.p;" + \
            "`timestamp$" + row["marketTimestamp"] + ";" + \
            "`$\"" + row["quoteId"] + "\";" + \
@@ -142,7 +142,7 @@ def get_data_from_orderbook_result(result, market):
             else:
                 raise ValueError("API result should be a list only for spot for KRAKEN.")
         elif type(result) == dict:
-            if is_future_market_ticker(result["product_id"]):
+            if is_future_market_ticker(result["product_id"], market):
                 if "bids" in result.keys():
                     data = {"bids": process_kraken_future_orderbook_side(result["bids"]),
                             "asks": process_kraken_future_orderbook_side(result["asks"]),

@@ -119,6 +119,7 @@ def create_ws_subscription_kdb_persister_debug(subscription_type, sym, market, d
 
     while datetime.datetime.now() < end_time:
         try:
+            app_log.info(ws.getstatus())
             result = get_ws_result(ws, market)
             app_log.info(
                 'WS ' + subscription_type + ' subcscription for ' + sym + " on " + market + " - Received  '%s'" % result)

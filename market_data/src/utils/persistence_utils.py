@@ -112,7 +112,7 @@ def handle_ws_errors(ws, result):
         elif "errors" in result.keys():
             error = result["errors"]
     if error != "":
-        app_log.error("Closing WS connection to ", ws.url, "Received the following error:", error)
+        app_log.error("Closing WS connection to ", ws.sock.server_hostname, "Received the following error:", error)
         ws.close()
         raise ConnectionError("WS received the following error:", error)
     else:
