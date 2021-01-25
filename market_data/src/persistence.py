@@ -129,7 +129,10 @@ def create_ws_subscription_kdb_persister_debug(subscription_type, sym, market, d
         except Exception as error:
             app_log.error(
                 'WS ' + subscription_type + ' subcscription for ' + sym + " on " + market + ' - Caught this error: ' + repr(
-                    error))
+                    error) + " - Last result was:", str(result))
             time.sleep(3)
-    ws.close()
+    try:
+        ws.close()
+    except Exception as error:
+        app_log.debug("Connection already closd ?", error)
     return app_log.handlers[0].baseFilename

@@ -8,7 +8,7 @@ import unittest
 
 from market_data.src.persistence import create_ws_subscription_kdb_persister_debug
 
-DEBUG_TIME = 1
+DEBUG_TIME = 2
 
 
 # TODO Add should Have Successful connection
@@ -32,7 +32,6 @@ class TestShouldPersistAllMarketstradesForXBTUSDFuture210129WithoutError(unittes
         self.assertTrue(" - ERROR - " not in f.read(), "Persistence failed, look at log:" + log_file)
 
     def test_persistence_trades_bitmex_xbtusd_future(self):
-        # 2021-01-08 23:07:11,084 - ERROR - create_ws_subscription_kdb_persister_debug - (140) - WS trades subcscription for XBTUSD on BITMEX - Caught this error: KeyError('data')
         log_file = create_ws_subscription_kdb_persister_debug(subscription_type="trades",
                                                               sym="XBTUSD/Future/210326",
                                                               market="BITMEX",
