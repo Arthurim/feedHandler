@@ -8,7 +8,7 @@ import unittest
 
 from market_data.src.persistence import create_ws_subscription_kdb_persister_debug
 
-DEBUG_TIME = 1
+DEBUG_TIME_IN_MINUTES = 10
 
 
 # TODO Add should Have Successful connection
@@ -18,7 +18,7 @@ class TestShouldPersistAllMarketsOrderbooksForXBTUSDWithoutError(unittest.TestCa
         log_file = create_ws_subscription_kdb_persister_debug(subscription_type="orderbooks",
                                                               sym="XBTUSD",
                                                               market="KRAKEN",
-                                                              debug_time=DEBUG_TIME)
+                                                              debug_time=DEBUG_TIME_IN_MINUTES)
         f = open(os.path.join(log_file), "r")
         self.assertTrue(" - ERROR - " not in f.read(), "Persistence failed, look at log:" + log_file)
 
@@ -26,7 +26,7 @@ class TestShouldPersistAllMarketsOrderbooksForXBTUSDWithoutError(unittest.TestCa
         log_file = create_ws_subscription_kdb_persister_debug(subscription_type="orderbooks",
                                                               sym="XBTUSDT",
                                                               market="BINANCE",
-                                                              debug_time=DEBUG_TIME)
+                                                              debug_time=DEBUG_TIME_IN_MINUTES)
         f = open(os.path.join(log_file), "r")
         self.assertTrue(" - ERROR - " not in f.read(), "Persistence failed, look at log:" + log_file)
 
@@ -35,7 +35,7 @@ class TestShouldPersistAllMarketsOrderbooksForXBTUSDWithoutError(unittest.TestCa
         log_file = create_ws_subscription_kdb_persister_debug(subscription_type="orderbooks",
                                                               sym="XBTUSD",
                                                               market="COINBASE",
-                                                              debug_time=DEBUG_TIME)
+                                                              debug_time=DEBUG_TIME_IN_MINUTES)
         f = open(os.path.join(log_file), "r")
         self.assertTrue(" - ERROR - " not in f.read(), "Persistence failed, look at log:" + log_file)
 
@@ -43,7 +43,7 @@ class TestShouldPersistAllMarketsOrderbooksForXBTUSDWithoutError(unittest.TestCa
         log_file = create_ws_subscription_kdb_persister_debug(subscription_type="orderbooks",
                                                               sym="XBTUSD",
                                                               market="BITMEX",
-                                                              debug_time=DEBUG_TIME)
+                                                              debug_time=DEBUG_TIME_IN_MINUTES)
         f = open(os.path.join(log_file), "r")
         self.assertTrue(" - ERROR - " not in f.read(), "Persistence failed, look at log:" + log_file)
 
@@ -51,7 +51,7 @@ class TestShouldPersistAllMarketsOrderbooksForXBTUSDWithoutError(unittest.TestCa
         log_file = create_ws_subscription_kdb_persister_debug(subscription_type="orderbooks",
                                                               sym="XBTUSD",
                                                               market="BITFINEX",
-                                                              debug_time=DEBUG_TIME)
+                                                              debug_time=DEBUG_TIME_IN_MINUTES)
         f = open(os.path.join(log_file), "r")
         self.assertTrue(" - ERROR - " not in f.read(), "Persistence failed, look at log:" + log_file)
 
@@ -59,7 +59,7 @@ class TestShouldPersistAllMarketsOrderbooksForXBTUSDWithoutError(unittest.TestCa
         log_file = create_ws_subscription_kdb_persister_debug(subscription_type="orderbooks",
                                                               sym="XBTUSDT",
                                                               market="HUOBI",
-                                                              debug_time=DEBUG_TIME)
+                                                              debug_time=DEBUG_TIME_IN_MINUTES)
         f = open(os.path.join(log_file), "r")
         self.assertTrue(" - ERROR - " not in f.read(), "Persistence failed, look at log:" + log_file)
 

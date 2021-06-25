@@ -7,7 +7,8 @@
 """
 import datetime
 
-from futures_expiry import get_month_code, get_month_str, get_month_int, get_last_friday_of_the_month
+from market_data.src.utils.futures_expiry import get_month_code, get_month_str, get_month_int, \
+    get_last_friday_of_the_month
 
 
 def from_huobi_sym(sym):

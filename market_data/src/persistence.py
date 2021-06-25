@@ -116,10 +116,10 @@ def create_ws_subscription_kdb_persister_debug(subscription_type, sym, market, d
             "Stopping WS " + subscription_type + ' subcscription for ' + sym + " on " + market + " - Subscription failed")
 
     arg = get_args_for_subscription(subscription_type, sym, market)
-
-    while datetime.datetime.now() < end_time:
+    n_errors = 0
+    while (datetime.datetime.now() < end_time) and n_errors < 5:
         try:
-            app_log.info(ws.getstatus())
+            app_log.info("WS status - " + str(ws.getstatus()))
             result = get_ws_result(ws, market)
             app_log.info(
                 'WS ' + subscription_type + ' subcscription for ' + sym + " on " + market + " - Received  '%s'" % result)
@@ -128,9 +128,10 @@ def create_ws_subscription_kdb_persister_debug(subscription_type, sym, market, d
                 result, market)):
                 arg = persist_subscription_result_to_kdb(result, subscription_type, arg)
         except Exception as error:
+            n_errors += 1
             app_log.error(
                 'WS ' + subscription_type + ' subcscription for ' + sym + " on " + market + ' - Caught this error: ' + repr(
-                    error) + " - Last result was:", str(result))
+                    error) + " - Last result was:" + str(result))
             time.sleep(3)
     try:
         ws.close()

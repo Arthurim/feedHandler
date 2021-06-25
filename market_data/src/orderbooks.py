@@ -5,6 +5,7 @@
 """
 import datetime
 import logging
+import zlib
 from uuid import uuid4
 
 import pandas as pd
@@ -31,8 +32,8 @@ def process_side(levels):
     sizes = []
     if type(levels) == dict:
         for k, v in levels.items():
-            prices.append(v)
-            sizes.append(float(k))
+            sizes.append(v)
+            prices.append(float(k))
     else:
         for quote in levels:
             if len(quote) == 2:
@@ -44,11 +45,12 @@ def process_side(levels):
     return prices, sizes
 
 
-def update_order_book_with_side_data(api_book, side, data, depth=10):
+def update_order_book_with_side_data(api_book, api_book_str, side, data, depth=10):
     """
     Updates the api_book on a given side with the new data for a max depth level
 
     :param api_book: dictionary, last representation of the orderbook
+    :param api_book_str: api_book in strings
     :param side: string, "bid" or "ask"
     :param data:
     :param depth: int, max level of depth we want to persist data for
@@ -59,17 +61,21 @@ def update_order_book_with_side_data(api_book, side, data, depth=10):
         # marketTimestamp = datetime.datetime.fromtimestamp(float(x[2])).strftime("%Y.%m.%dD%H:%M:%S.%f")
         if float(x[1]) != 0.0:
             api_book[side].update({price_level: float(x[1])})
+            api_book_str[side].update({price_level: x[1]})
         else:
             if price_level in api_book[side]:
                 api_book[side].pop(price_level)
+                api_book_str[side].pop(price_level)
     if side == "bid":
         api_book["bid"] = dict(sorted(api_book["bid"].items(), key=dicttofloat, reverse=True)[:int(depth)])
+        api_book_str["bid"] = dict(sorted(api_book_str["bid"].items(), reverse=True)[:int(depth)])
     elif side == "ask":
         api_book["ask"] = dict(sorted(api_book["ask"].items(), key=dicttofloat)[:int(depth)])
-    return api_book
+        api_book_str["ask"] = dict(sorted(api_book_str["ask"].items())[:int(depth)])
+    return api_book, api_book_str
 
 
-def persist_orderbook_to_kdb(api_book, result, depth=10):
+def persist_orderbook_to_kdb(arg, result, depth=10):
     """
     Updates the orderbook api_book with the new result for a max depth level and calls the persistence function
 
@@ -80,16 +86,18 @@ def persist_orderbook_to_kdb(api_book, result, depth=10):
     """
 
     # TODO checksum see https://docs.kraken.com/websockets/#book-checksum
+    api_book = arg[0]
+    api_book_str = arg[1]
     result = get_data_from_orderbook_result(result, api_book["market"])
     app_log = logging.getLogger('root')
     if "asks" in result:
-        api_book = update_order_book_with_side_data(api_book, "ask", result["asks"], depth)
-        api_book = update_order_book_with_side_data(api_book, "bid", result["bids"], depth)
+        api_book, api_book_str = update_order_book_with_side_data(api_book, api_book_str, "ask", result["asks"], depth)
+        api_book, api_book_str = update_order_book_with_side_data(api_book, api_book_str, "bid", result["bids"], depth)
     elif "a" in result or "b" in result:
         if "a" in result:
-            api_book = update_order_book_with_side_data(api_book, "ask", result["a"], depth)
+            api_book, api_book_str = update_order_book_with_side_data(api_book, api_book_str, "ask", result["a"], depth)
         elif "b" in result:
-            api_book = update_order_book_with_side_data(api_book, "bid", result["b"], depth)
+            api_book, api_book_str = update_order_book_with_side_data(api_book, api_book_str, "bid", result["b"], depth)
     if has_kdb_format_timestamp(result["marketTimestamp"]):
         api_book["marketTimestamp"] = result["marketTimestamp"]
     else:
@@ -98,9 +106,21 @@ def persist_orderbook_to_kdb(api_book, result, depth=10):
         else:
             api_book["marketTimestamp"] = datetime.datetime.fromtimestamp(float(result["marketTimestamp"])).strftime(
                 "%Y.%m.%dD%H:%M:%S.%f")
+    if "c" in result.keys():
+        checksum = result["c"]
+        check_sum(api_book_str, checksum, arg[1], result)
     insert_orderbook_row_to_kdb(api_book)
-    return api_book
+    return [api_book, api_book_str]
 
+
+def check_sum(api_book_str, checksum, api_book_str_prev, upd):
+    # @FIXME  THE ISSUE IS WITH THE VOLUMES WHICH ARE FLOAT AND SHOULD BE STRING TO KEEP THE TRAILING ZEROES, WE SHOULD KEEP A STRING COPY OF THE OB
+    s = ""
+    for price_volume in list(map(list, api_book_str["ask"].items())) + list(map(list, api_book_str["bid"].items())):
+        s += price_volume[0].replace(".", "").lstrip("0") + str(price_volume[1]).replace(".", "").lstrip("0")
+    if not int(checksum) == zlib.crc32(str.encode(s)):
+        raise ValueError("Failed checksum, wtf man! Previous orderbook", api_book_str_prev, " with update: ", upd,
+                         " current orderbook ", api_book_str)
 
 def convert_orderbook_series_to_kdb_row(row):
     """
@@ -139,6 +159,8 @@ def get_data_from_orderbook_result(result, market):
                     data = {"b": result[1]["b"], "marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
                 elif "a" in result[1]:
                     data = {"a": result[1]["a"], "marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
+                if "c" in result[1].keys():
+                    data["c"] = result[1]["c"]
             else:
                 raise ValueError("API result should be a list only for spot for KRAKEN.")
         elif type(result) == dict:
