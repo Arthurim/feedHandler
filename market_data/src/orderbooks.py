@@ -60,11 +60,11 @@ def update_order_book_with_side_data(api_book, api_book_str, side, data, depth=1
         price_level = x[0]
         # marketTimestamp = datetime.datetime.fromtimestamp(float(x[2])).strftime("%Y.%m.%dD%H:%M:%S.%f")
         if float(x[1]) != 0.0:
-            api_book[side].update({price_level: float(x[1])})
+            api_book[side].update({float(price_level): float(x[1])})
             api_book_str[side].update({price_level: x[1]})
         else:
-            if price_level in api_book[side]:
-                api_book[side].pop(price_level)
+            if float(price_level) in api_book[side]:
+                api_book[side].pop(float(price_level))
                 api_book_str[side].pop(price_level)
     if side == "bid":
         api_book["bid"] = dict(sorted(api_book["bid"].items(), key=dicttofloat, reverse=True)[:int(depth)])
@@ -78,49 +78,78 @@ def update_order_book_with_side_data(api_book, api_book_str, side, data, depth=1
 def persist_orderbook_to_kdb(arg, result, depth=10):
     """
     Updates the orderbook api_book with the new result for a max depth level and calls the persistence function
+    We keep a string copy of the OB for checksum purpose
 
-    :param api_book: dictionary, last state of the orderbook
+    :param arg: list of 2 dictionaries, 1/ last state of the orderbook 2/ the copy as a string
     :param result: dictionary, the result from the API
     :param depth: int, the max nb of levels we want to persist
-    :return:
+    :return: updated orderbooks
     """
-
-    # TODO checksum see https://docs.kraken.com/websockets/#book-checksum
-    api_book = arg[0]
-    api_book_str = arg[1]
-    result = get_data_from_orderbook_result(result, api_book["market"])
-    app_log = logging.getLogger('root')
-    if "asks" in result:
-        api_book, api_book_str = update_order_book_with_side_data(api_book, api_book_str, "ask", result["asks"], depth)
-        api_book, api_book_str = update_order_book_with_side_data(api_book, api_book_str, "bid", result["bids"], depth)
-    elif "a" in result or "b" in result:
-        if "a" in result:
-            api_book, api_book_str = update_order_book_with_side_data(api_book, api_book_str, "ask", result["a"], depth)
-        elif "b" in result:
-            api_book, api_book_str = update_order_book_with_side_data(api_book, api_book_str, "bid", result["b"], depth)
-    if has_kdb_format_timestamp(result["marketTimestamp"]):
-        api_book["marketTimestamp"] = result["marketTimestamp"]
-    else:
-        if "T" in result["marketTimestamp"]:
-            api_book["marketTimestamp"] = result["marketTimestamp"].replace("T", "D").replace("-", ".").replace("Z", "")
-        else:
-            api_book["marketTimestamp"] = datetime.datetime.fromtimestamp(float(result["marketTimestamp"])).strftime(
-                "%Y.%m.%dD%H:%M:%S.%f")
-    if "c" in result.keys():
-        checksum = result["c"]
-        check_sum(api_book_str, checksum, arg[1], result)
+    api_book, api_book_str = update_orderbook(arg, result, depth)
     insert_orderbook_row_to_kdb(api_book)
     return [api_book, api_book_str]
 
 
-def check_sum(api_book_str, checksum, api_book_str_prev, upd):
-    # @FIXME  THE ISSUE IS WITH THE VOLUMES WHICH ARE FLOAT AND SHOULD BE STRING TO KEEP THE TRAILING ZEROES, WE SHOULD KEEP A STRING COPY OF THE OB
+def update_orderbook(orderbooks, update, depth=10):
+    """
+
+    :param orderbooks: list of 2 dictionaries, 1/ last state of the orderbook 2/ the copy as a string
+    :param update: the update from the API
+    :param depth:
+    :return:
+    """
+    api_book = orderbooks[0]
+    api_book_str = orderbooks[1]
+    update = get_data_from_orderbook_result(update, api_book["market"])
+    app_log = logging.getLogger('root')
+    if "asks" in update:
+        api_book, api_book_str = update_order_book_with_side_data(api_book, api_book_str, "ask", update["asks"], depth)
+        api_book, api_book_str = update_order_book_with_side_data(api_book, api_book_str, "bid", update["bids"], depth)
+    elif "a" in update or "b" in update:
+        if "a" in update:
+            api_book, api_book_str = update_order_book_with_side_data(api_book, api_book_str, "ask", update["a"], depth)
+        elif "b" in update:
+            api_book, api_book_str = update_order_book_with_side_data(api_book, api_book_str, "bid", update["b"], depth)
+    if has_kdb_format_timestamp(update["marketTimestamp"]):
+        api_book["marketTimestamp"] = update["marketTimestamp"]
+    else:
+        if "T" in update["marketTimestamp"]:
+            api_book["marketTimestamp"] = update["marketTimestamp"].replace("T", "D").replace("-", ".").replace("Z", "")
+        else:
+            api_book["marketTimestamp"] = datetime.datetime.fromtimestamp(float(update["marketTimestamp"])).strftime(
+                "%Y.%m.%dD%H:%M:%S.%f")
+        api_book_str["marketTimestamp"] = api_book["marketTimestamp"]
+    if "c" in update.keys():
+        checksum = update["c"]
+        check_sum(api_book_str, checksum, orderbooks[1], update)
+    return api_book, api_book_str
+
+
+def compute_check_sum(api_book_str):
+    s = compute_check_sum_input(api_book_str)
+    return zlib.crc32(str.encode(s))
+
+
+def compute_check_sum_input(api_book_str):
     s = ""
     for price_volume in list(map(list, api_book_str["ask"].items())) + list(map(list, api_book_str["bid"].items())):
         s += price_volume[0].replace(".", "").lstrip("0") + str(price_volume[1]).replace(".", "").lstrip("0")
-    if not int(checksum) == zlib.crc32(str.encode(s)):
-        raise ValueError("Failed checksum, wtf man! Previous orderbook", api_book_str_prev, " with update: ", upd,
-                         " current orderbook ", api_book_str)
+    return s
+
+
+def check_sum(api_book_str, checksum, api_book_str_prev, upd):
+    app_log = logging.getLogger('root')
+    computed_checksum = compute_check_sum(api_book_str)
+    if not int(checksum) == computed_checksum:
+        app_log.error("Failed checksum, wtf man! \n-Previous orderbook", api_book_str_prev, "\n- with update: ", upd,
+                      " \n- computed orderbook ", api_book_str,
+                      " \n- comptued checksum", computed_checksum,
+                      " \n- expected checksum", checksum,
+                      "\n restarting subscription")
+        return False
+    else:
+        return True
+
 
 def convert_orderbook_series_to_kdb_row(row):
     """

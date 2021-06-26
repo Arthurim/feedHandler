@@ -63,8 +63,8 @@ def get_args_for_subscription(subscription_type, sym, market):
     :return: various
     """
     if subscription_type == "orderbooks":
-        arg = [{"sym": sym, "market": market, "marketTimestamp": {}, "bid": {}, "ask": {}},
-               {"sym": sym, "market": market, "marketTimestamp": {}, "bid": {}, "ask": {}}]
+        arg = [{"sym": sym, "market": market, "marketTimestamp": "", "bid": {}, "ask": {}},
+               {"sym": sym, "market": market, "marketTimestamp": "", "bid": {}, "ask": {}}]
     elif subscription_type == "trades":
         arg = {"market": market, "sym": sym}
     elif subscription_type == "ohlcs":
@@ -96,6 +96,9 @@ def get_ws_result(ws, market):
     result = handle_ws_errors(ws, result)
     return result
 
+
+def unsubscribe(ws):
+    ws.send(json.dumps({"event": "unsubscribe"}))
 
 def handle_ws_errors(ws, result):
     """
