@@ -10,7 +10,7 @@ from logging.handlers import RotatingFileHandler
 
 from websocket import create_connection
 
-from market_data.src.utils.sym_handler import format_sym_for_market, is_spot_market_ticker, is_future_market_ticker
+from core.src.sym_handler import format_sym_for_market, is_spot_market_ticker, is_future_market_ticker
 
 
 def create_wss_connection(subscription_type, market, sym):

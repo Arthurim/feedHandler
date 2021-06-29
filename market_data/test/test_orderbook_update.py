@@ -291,7 +291,6 @@ class TestShouldCorrectlyUpdateOrderbook(unittest.TestCase):
         self.assertTrue(check_sum == expected_check_sum,
                         "Wrong checksum")
 
-
 if __name__ == "__main__":
     unittest.main()
     print("Everything passed")

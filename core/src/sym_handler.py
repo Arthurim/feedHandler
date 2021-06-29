@@ -11,6 +11,10 @@ from market_data.src.utils.futures_expiry import get_month_code, get_month_str, 
     get_last_friday_of_the_month
 
 
+
+SPOT = "Spot"
+FUTURE = "Future"
+
 def from_huobi_sym(sym):
     return sym.upper()
 
@@ -148,11 +152,11 @@ def is_future(sym):
 
 
 def is_spot_market_ticker(sym, market):
-    return get_instrument_type_from_market_ticker(sym, market) == "Spot"
+    return get_instrument_type_from_market_ticker(sym, market) == SPOT
 
 
 def is_future_market_ticker(sym, market):
-    return get_instrument_type_from_market_ticker(sym, market) == "Future"
+    return get_instrument_type_from_market_ticker(sym, market) == FUTURE
 
 
 def get_instrument_type_from_market_ticker(sym, market):
@@ -160,13 +164,13 @@ def get_instrument_type_from_market_ticker(sym, market):
         # spot: XBT/USD
         # future: FI_XBTUSD_YYMMDD
         if sym[:3] == "FI_":
-            return "Future"
+            return FUTURE
         else:
-            return "Spot"
+            return SPOT
     elif market == "COINBASE":
         # spot:  BTC-USD
         # only spot
-        return "Spot"
+        return SPOT
     elif market == "BINANCE":
         # spot: btcusd
         # future: BTCUSD_210326
@@ -175,21 +179,21 @@ def get_instrument_type_from_market_ticker(sym, market):
             year = datetime.datetime.now().year
             if get_last_friday_of_the_month(datetime.datetime(year, month_int, 1)) == datetime.datetime(year, month_int,
                                                                                                         int(sym[-2:])):
-                return "Future"
+                return FUTURE
         else:
-            return "Spot"
+            return SPOT
     elif market == "BITFINEX":
         # spot: BTCUSD
         # only spot
-        return "Spot"
+        return SPOT
     elif market == "HUOBI":
         # spot: btcusd
         # future: BTC201225
         for i in sym[-6:]:
             if not i.isdigit():
-                return "Spot"
+                return SPOT
         else:
-            return "Future"
+            return FUTURE
     elif market == "BITMEX":
         # spot: XBTUSD
         # future: XBTH21
@@ -199,6 +203,6 @@ def get_instrument_type_from_market_ticker(sym, market):
             year = datetime.datetime.now().year
             if get_last_friday_of_the_month(datetime.datetime(year, month_int, 1)) == datetime.datetime(year, month_int,
                                                                                                         int(sym[-2:])):
-                return "Future"
+                return FUTURE
         else:
-            return "Spot"
+            return SPOT

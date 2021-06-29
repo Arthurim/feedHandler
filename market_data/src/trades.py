@@ -10,7 +10,7 @@ import pandas as pd
 from market_data.src.constants.kdb_hosts import MARKET_DATA_KDB_HOST, MARKET_DATA_TP
 from market_data.src.utils.persistence_utils import persist_row_to_table
 from market_data.src.utils.python_to_kdb_conversion import convert_trades_series_to_kdb_row
-from market_data.src.utils.sym_handler import is_spot, is_future
+from core.src.sym_handler import is_spot, is_future
 
 
 def hormonise_side(s):

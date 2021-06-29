@@ -13,7 +13,8 @@ import pandas as pd
 from market_data.src.constants.kdb_hosts import MARKET_DATA_KDB_HOST, MARKET_DATA_TP
 from market_data.src.utils.kdb_utils_format import has_kdb_format_timestamp, convert_sym_to_kdb_format
 from market_data.src.utils.persistence_utils import persist_row_to_table
-from market_data.src.utils.sym_handler import is_spot_market_ticker, is_future_market_ticker
+from core.src.sym_handler import is_spot_market_ticker, is_future_market_ticker
+import copy
 
 
 def dicttofloat(keyvalue):
@@ -85,12 +86,12 @@ def persist_orderbook_to_kdb(arg, result, depth=10):
     :param depth: int, the max nb of levels we want to persist
     :return: updated orderbooks
     """
-    api_book, api_book_str = update_orderbook(arg, result, depth)
+    api_book, api_book_str, prev_upd = update_orderbook(arg, result, depth)
     insert_orderbook_row_to_kdb(api_book)
-    return [api_book, api_book_str]
+    return [api_book, api_book_str, prev_upd]
 
 
-def update_orderbook(orderbooks, update, depth=10):
+def update_orderbook(orderbooks, result, depth=10):
     """
 
     :param orderbooks: list of 2 dictionaries, 1/ last state of the orderbook 2/ the copy as a string
@@ -98,9 +99,10 @@ def update_orderbook(orderbooks, update, depth=10):
     :param depth:
     :return:
     """
-    api_book = orderbooks[0]
-    api_book_str = orderbooks[1]
-    update = get_data_from_orderbook_result(update, api_book["market"])
+    api_book = copy.deepcopy(orderbooks[0])
+    api_book_str = copy.deepcopy(orderbooks[1])
+    prev_upd = copy.deepcopy(orderbooks[2])
+    update = get_data_from_orderbook_result(result, api_book["market"])
     app_log = logging.getLogger('root')
     if "asks" in update:
         api_book, api_book_str = update_order_book_with_side_data(api_book, api_book_str, "ask", update["asks"], depth)
@@ -108,7 +110,7 @@ def update_orderbook(orderbooks, update, depth=10):
     elif "a" in update or "b" in update:
         if "a" in update:
             api_book, api_book_str = update_order_book_with_side_data(api_book, api_book_str, "ask", update["a"], depth)
-        elif "b" in update:
+        if "b" in update:
             api_book, api_book_str = update_order_book_with_side_data(api_book, api_book_str, "bid", update["b"], depth)
     if has_kdb_format_timestamp(update["marketTimestamp"]):
         api_book["marketTimestamp"] = update["marketTimestamp"]
@@ -121,8 +123,13 @@ def update_orderbook(orderbooks, update, depth=10):
         api_book_str["marketTimestamp"] = api_book["marketTimestamp"]
     if "c" in update.keys():
         checksum = update["c"]
-        check_sum(api_book_str, checksum, orderbooks[1], update)
-    return api_book, api_book_str
+        check_sum(api_book_str, checksum, orderbooks[1], update, prev_upd)
+    else:
+        print("no checksum???")
+    prev_upd.append(result)
+    if api_book_str == orderbooks[1]:
+        raise ValueError("NOT UPDATED?")
+    return api_book, api_book_str, prev_upd
 
 
 def compute_check_sum(api_book_str):
@@ -137,7 +144,7 @@ def compute_check_sum_input(api_book_str):
     return s
 
 
-def check_sum(api_book_str, checksum, api_book_str_prev, upd):
+def check_sum(api_book_str, checksum, api_book_str_prev, upd, prev_upd):
     app_log = logging.getLogger('root')
     computed_checksum = compute_check_sum(api_book_str)
     if not int(checksum) == computed_checksum:
@@ -146,6 +153,7 @@ def check_sum(api_book_str, checksum, api_book_str_prev, upd):
                       " \n- comptued checksum", computed_checksum,
                       " \n- expected checksum", checksum,
                       "\n restarting subscription")
+        raise ValueError("WRONG CHECK SUM")
         return False
     else:
         return True
@@ -181,15 +189,24 @@ def get_data_from_orderbook_result(result, market):
     if market == "KRAKEN":
         if type(result) == list:
             if is_spot_market_ticker(result[3], market):
-                if "bs" in result[1]:
-                    data = {"bids": result[1]["bs"], "asks": result[1]["as"],
-                            "marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
-                elif "b" in result[1]:
-                    data = {"b": result[1]["b"], "marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
-                elif "a" in result[1]:
-                    data = {"a": result[1]["a"], "marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
-                if "c" in result[1].keys():
-                    data["c"] = result[1]["c"]
+                if len(result) == 4:
+                    if "bs" in result[1]:
+                        data = {"bids": result[1]["bs"], "asks": result[1]["as"],
+                                "marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
+                    elif "b" in result[1]:
+                        data = {"b": result[1]["b"], "marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
+                    elif "a" in result[1]:
+                        data = {"a": result[1]["a"], "marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
+                    if "c" in result[1]:
+                        data["c"] = result[1]["c"]
+                elif len(result) == 5:
+                    data = {"marketTimestamp": get_timestamp_from_kraken_orderbook(result)}
+                    for i in [1,2]:
+                        keys = result[i].keys()
+                        for k in keys:
+                            data[k] = result[i][k]
+                else:
+                    raise  ValueError("Update of unexpected length:",result)
             else:
                 raise ValueError("API result should be a list only for spot for KRAKEN.")
         elif type(result) == dict:
