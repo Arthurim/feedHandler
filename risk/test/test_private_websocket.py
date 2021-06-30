@@ -12,7 +12,7 @@ from risk.src.websocket.webscoket_private import create_wss_subscription_private
     cancel_order, create_wss_private
 
 
-class testPrivateWebsocket(unittest.TestCase):
+class TestPrivateWebsocket(unittest.TestCase):
 
     def testShouldCreateSubscriptionForOwnTradesKrakenSpot(self):
         subscription_type = "ownTrades"
@@ -75,13 +75,6 @@ class testPrivateWebsocket(unittest.TestCase):
         self.assertTrue(ws_info["status"] == "online", "Connection is not online")
         ws_result = add_order(ws, sym, instrument_type, market, True, "market", "0.0001")
         self.assertTrue(ws_result["status"] == "ok", "Something went wrong when adding order")
-        txid = ws_result["txid"]
-
-        <
-
-        class 'dict'>: {'descr': 'buy 0.00010000 XBTUSD @ market', 'event': 'addOrderStatus', 'status': 'ok',
-                        'txid': 'ODYFUJ-NZOP2-LN22W6'}
-
         txid = ws_result["txid"]
 
     def testSendAndCancelOrderKrakenFuture(self):
