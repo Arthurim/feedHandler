@@ -7,24 +7,13 @@
 import warnings
 
 warnings.filterwarnings('ignore')
-from math import floor
-import requests
-import time
-import base64
-import hashlib
-import hmac
-import json
-import urllib.request as urllib2
-import ssl
-import pandas as pd
-import ast
-import datetime
 import urllib.parse
 import hashlib
 import hmac
 import base64
 import time
 
+from core.src.sym_handler import format_sym_for_market
 from core.src.rest.kraken_rest_api import API
 
 
@@ -109,12 +98,12 @@ class API_spot(API):
 
     def get_bid(self, ticker):
         tickerinfo = self.query_public("Ticker", {"pair": ticker})
-        bid = tickerinfo['result'][format_ticker_for_spot_api(ticker)]['b'][0]
+        bid = tickerinfo['result'][self.format_sym_for_rest_api(ticker)]['b'][0]
         return float(bid)
 
     def get_ask(self, ticker):
         tickerinfo = self.query_public("Ticker", {"pair": ticker})
-        ask = tickerinfo['result'][format_ticker_for_spot_api(ticker)]['a'][0]
+        ask = tickerinfo['result'][self.format_sym_for_rest_api(ticker)]['a'][0]
         return float(ask)
 
     def get_mid(self, ticker):
@@ -145,3 +134,9 @@ class API_spot(API):
 
     def get_private_token(self):
         return self.query_private("GetWebSocketsToken")["result"]["token"]
+
+    def format_sym_for_rest_api(self, sym):
+        if sym == "bchusd":
+            return "BCHUSD"
+        else:
+            return "X" + sym.upper()[:3] + "Z" + sym.upper()[3:]
