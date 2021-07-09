@@ -3,6 +3,7 @@
 @author: Arthurim
 @Description: functions to handle the creation of an orderbook from the ECNs APIs and to persist it to kdb
 """
+import copy
 import datetime
 import logging
 import zlib
@@ -10,11 +11,10 @@ from uuid import uuid4
 
 import pandas as pd
 
+from core.src.sym_handler import is_spot_market_ticker, is_future_market_ticker
 from market_data.src.constants.kdb_hosts import MARKET_DATA_KDB_HOST, MARKET_DATA_TP
 from market_data.src.utils.kdb_utils_format import has_kdb_format_timestamp, convert_sym_to_kdb_format
 from market_data.src.utils.persistence_utils import persist_row_to_table
-from core.src.sym_handler import is_spot_market_ticker, is_future_market_ticker
-import copy
 
 
 def dicttofloat(keyvalue):
@@ -128,7 +128,7 @@ def update_orderbook(orderbooks, result, depth=10):
         print("no checksum???")
     prev_upd.append(result)
     if api_book_str == orderbooks[1]:
-        raise ValueError("NOT UPDATED?")
+        app_log.debug("Received two times the same update:", result)
     return api_book, api_book_str, prev_upd
 
 
@@ -152,8 +152,8 @@ def check_sum(api_book_str, checksum, api_book_str_prev, upd, prev_upd):
                       " \n- computed orderbook ", api_book_str,
                       " \n- comptued checksum", computed_checksum,
                       " \n- expected checksum", checksum,
-                      "\n restarting subscription")
-        raise ValueError("WRONG CHECK SUM")
+                      " \n restarting subscription")
+        app_log.debug("WRONG CHECK SUM")
         return False
     else:
         return True

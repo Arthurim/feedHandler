@@ -18,7 +18,7 @@ class TestShouldPersistAllMarketsOrderbooksForXBTUSDWithoutError(unittest.TestCa
         log_file = create_ws_subscription_kdb_persister_debug(subscription_type="orderbooks",
                                                               sym="XBTUSD",
                                                               market="KRAKEN",
-                                                              debug_time=DEBUG_TIME_IN_MINUTES)
+                                                              debug_time=60 * 4)
         f = open(os.path.join(log_file), "r")
         self.assertTrue(" - ERROR - " not in f.read(), "Persistence failed, look at log:" + log_file)
 

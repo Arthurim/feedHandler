@@ -60,6 +60,7 @@ def create_ws_subscription_kdb_persister(subscription_type, sym, market):
     app_log.info('Creating a WS' + subscription_type + ' subcscription for ' + sym + " on " + market)
     try:
         ws = create_wss_connection(subscription_type, market, sym)
+        ws_backup = create_wss_connection(subscription_type, market, sym)
         app_log.info('WS ' + subscription_type + ' subcscription for ' + sym + " on " + market + " is successful")
     except Exception as error:
         app_log.error(
@@ -73,7 +74,11 @@ def create_ws_subscription_kdb_persister(subscription_type, sym, market):
 
     while True:
         try:
-            result = get_ws_result(ws, market)
+            try:
+                result = get_ws_result(ws, market)
+            except:
+                print("Using backup API")
+                result = get_ws_result(ws_backup, market)
             app_log.info(
                 'WS ' + subscription_type + ' subcscription for ' + sym + " on " + market + " - Received  '%s'" % result)
             if not (is_event_WS_result(result) or is_info_WS_result(result)):
@@ -84,6 +89,7 @@ def create_ws_subscription_kdb_persister(subscription_type, sym, market):
                     error))
             time.sleep(3)
     ws.close()
+    ws_backup.close()
 
 
 def create_ws_subscription_kdb_persister_debug(subscription_type, sym, market, debug_time=1):
@@ -94,6 +100,7 @@ def create_ws_subscription_kdb_persister_debug(subscription_type, sym, market, d
     :param subscription_type: string, the type of data we are persisting (trades, orderbooks, ohlcs, spreads)
     :param sym: string, XBTUSD etc
     :param market: string, see markets in SUPPORTED_MARKETS
+    :return basefile name for log
     """
     end_time = datetime.datetime.now() + datetime.timedelta(0, 60 * debug_time)
     if not is_supported_market(market):
@@ -106,6 +113,7 @@ def create_ws_subscription_kdb_persister_debug(subscription_type, sym, market, d
     app_log.info('Creating a WS' + subscription_type + ' subcscription for ' + sym + " on " + market)
     try:
         ws = create_wss_connection(subscription_type, market, sym)
+        ws_backup = create_wss_connection(subscription_type, market, sym)
         app_log.info('WS ' + subscription_type + ' subcscription for ' + sym + " on " + market + " is successful")
     except Exception as error:
         app_log.error(
@@ -117,10 +125,21 @@ def create_ws_subscription_kdb_persister_debug(subscription_type, sym, market, d
 
     arg = get_args_for_subscription(subscription_type, sym, market)
     n_errors = 0
+    source = 0
     while (datetime.datetime.now() < end_time) and n_errors < 5:
         try:
-            app_log.info("WS status - " + str(ws.getstatus()))
-            result = get_ws_result(ws, market)
+            try:
+                app_log.info("WS status - " + str(ws.getstatus()))
+                result_main = get_ws_result(ws, market)
+            except Exception as error:
+                app_log.debug("Main WS failed with ", repr(error), ". Using backup API.")
+                source = 1
+            try:
+                result_backup = get_ws_result(ws_backup, market)
+            except Exception as error:
+                app_log.debug("Backup API failed with ", repr(error), ". Using main API.")
+                source = 0
+            result = result_main if source == 0 else result_backup
             app_log.info(
                 'WS ' + subscription_type + ' subcscription for ' + sym + " on " + market + " - Received  '%s'" % result)
             if not (is_event_WS_result(result) or is_info_WS_result(result) or is_ping_WS_result(
@@ -132,9 +151,9 @@ def create_ws_subscription_kdb_persister_debug(subscription_type, sym, market, d
             app_log.error(
                 'WS ' + subscription_type + ' subcscription for ' + sym + " on " + market + ' - Caught this error: ' + repr(
                     error) + " - Last result was:" + str(result))
-            time.sleep(3)
     try:
         ws.close()
+        ws_backup.close()
     except Exception as error:
         app_log.debug("Connection already closd ?", error)
     return app_log.handlers[0].baseFilename
