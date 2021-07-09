@@ -9,7 +9,7 @@ from core.src.rest.kraken_rest_api_spot import API_spot
 from core.src.sym_handler import SPOT, FUTURE
 
 
-def create_kraken_api(instrument_type, account):
+def create_kraken_api(instrument_type, account="arthur"):
     with open("C:/dev/data/kraken/k" + account + "_" + instrument_type + ".txt") as f:
         content = f.readlines()
     public_key = content[0][:-1]

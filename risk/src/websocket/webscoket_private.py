@@ -60,7 +60,7 @@ def add_order(ws, sym, instrument_type, market, buy, order_type, volume, userref
                               "pair": format_sym_for_market(sym, market),
                               "type": "buy" if buy else "sell",
                               "ordertype": order_type,
-                              "price": price,
+                              "price": str(price),
                               "volume": volume}
 
             if leverage is not None:
@@ -146,3 +146,94 @@ def get_challenge_kraken_futures(ws, instrument_type, account="arthur"):
         # tryagain
         raise ValueError("Should return challenge, but got this instead:", challenge_info)
     return {"original_challenge": original_challenge, "signed_challenge": signed_challenge}
+
+
+def get_list_of_own_trades(market, instrument_type, account="arthur"):
+    if market == "KRAKEN":
+        if instrument_type == SPOT:
+            ws = create_ws_own_trades_subscription(market, instrument_type, account)
+            res = json.loads(ws.recv())[0]
+            ws.close()
+            return res
+
+
+def get_list_of_open_orders(market, instrument_type, account="arthur"):
+    if market == "KRAKEN":
+        if instrument_type == SPOT:
+            ws = create_wss_subscription_private("openOrders", market, instrument_type, account)
+            r1 = json.loads(ws.recv())
+            if not r1["status"] == "online":
+                raise ValueError("Connection is not online")
+            r2 = json.loads(ws.recv())
+            if not r2["status"] == "subscribed":
+                raise ValueError("Connection is not subscribed")
+            res = json.loads(ws.recv())[0]
+            ws.close()
+            return res
+
+
+def is_order_in_list(order_id, orders):
+    for o in orders:
+        if order_id in o:
+            return True
+    return False
+
+
+def create_ws_private_subscription(subscription_type, market, instrument_type, account="arthur"):
+    if market == "KRAKEN":
+        if instrument_type == SPOT:
+            ws = create_wss_subscription_private(subscription_type, market, instrument_type, account)
+            r1 = json.loads(ws.recv())
+            if not r1["status"] == "online":
+                raise ValueError("Connection is not online")
+            r2 = json.loads(ws.recv())
+            if not r2["status"] == "subscribed":
+                raise ValueError("Connection is not subscribed")
+    return ws
+
+
+def create_ws_own_trades_subscription(market, instrument_type, account="arthur"):
+    return create_ws_private_subscription("own_trades", market, instrument_type, account)
+
+
+def create_ws_open_orders_subscription(market, instrument_type, account="arthur"):
+    return create_ws_private_subscription("open_orders", market, instrument_type, account)
+
+
+def get_associated_trade(ws_trades, order_id):
+    result = json.loads(ws_trades.recv())[0]
+    for trade in result:
+        trade_id = list(trade.keys())[0]
+        if trade[trade_id]["ordertxid"] == order_id:
+            return trade
+
+def get_trade_id_from_trade(trade):
+    """
+
+    :param trade:
+    :return:
+    """
+    return list(trade.keys())[0]
+
+def get_risk_increasing_trade_of_execution(execution_info):
+    """
+    :param execution_info: {"orders": {"o1": {"last_status": "done"}, "o2": {"last_status": "open"}},
+                            "trades": {"t1": {}, "t2": {}}}
+    :return:
+    """
+    trades = execution_info["trades"]
+    for trade_id in trades:
+        if trades[trade_id]["riskClassification"] == "RI":
+            return trades[trade_id]
+    return "execution has no trade"
+
+
+def is_first_trade_of_execution(trade_id, execution_info):
+    """
+
+    :param trade_id:
+    :param execution_info:
+    :return:
+    """
+    first_trade = get_risk_increasing_trade_of_execution(execution_info)
+    return (first_trade == trade_id) or (first_trade == "execution has no trade")
